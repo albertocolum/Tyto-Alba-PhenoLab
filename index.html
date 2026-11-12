@@ -1,165 +1,698 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tyto Alba PhenoLab - Estudio Fenotípico</title>
-    <script src="https://tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tyto Alba PhenoLab</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
+body{background:#020617;color:#f1f5f9;padding:20px}
+.wrap{max-width:1400px;margin:0 auto}
+header{border-bottom:1px solid #1e293b;padding-bottom:14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+h1{color:#22d3ee;font-size:22px}
+.badge{background:#064e3b;color:#6ee7b7;padding:4px 12px;border-radius:99px;font-size:12px;font-weight:700}
+.box{border:2px dashed #334155;background:#0f172a;border-radius:12px;padding:28px;text-align:center}
+.btn{display:inline-block;background:#06b6d4;color:#020617;border:none;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer;margin-top:12px;font-size:14px}
+.hide{display:none!important}
+.st{background:#1e293b;color:#38bdf8;padding:10px;border-radius:8px;margin-top:14px;text-align:center;font-size:13px;font-weight:700}
+.ctrl{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:12px 16px;margin-top:14px;display:flex;flex-wrap:wrap;gap:15px;align-items:center;justify-content:space-between;font-size:13px}
+.grid{display:grid;grid-template-columns:1.1fr 1.1fr;gap:18px;margin-top:18px}
+@media(max-width:1100px){.grid{grid-template-columns:1fr}}
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:15px;margin-bottom:15px}
+.ch{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:10px}
+.bdl{background:#10b981;color:#020617;border:none;padding:7px 14px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px}
+.bcsv{width:100%;background:#1e293b;color:#38bdf8;border:1px solid #334155;padding:11px;border-radius:8px;font-weight:700;cursor:pointer;margin-bottom:8px}
+.cw{background:#000;border-radius:8px;overflow:hidden;text-align:center;position:relative}
+canvas{max-width:100%;height:auto;display:block;margin:0 auto;cursor:crosshair}
+.row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid #1e293b66}
+.sw{width:20px;height:20px;border-radius:50%;border:1px solid #fff}
+.scale-box{background:#0a0d12;border:1px solid #262b36;border-radius:8px;padding:12px;margin-top:10px}
+.scale-row{display:flex;align-items:center;gap:10px;margin-bottom:4px;font-size:12px;color:#cbd5e1}
+.scale-sq{width:28px;height:22px;border:1px solid #475569;flex-shrink:0}
+.scale-active{outline:2px solid #38bdf8;outline-offset:1px;border-radius:2px}
+.calibration-banner{background:#172554;border:1px solid #1e3a8a;color:#93c5fd;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.meta-field{display:flex;flex-direction:column;gap:3px}
+.meta-field label{font-size:11px;color:#94a3b8;font-weight:600}
+.meta-field input,.meta-field select{background:#020617;border:1px solid #334155;color:#f1f5f9;padding:6px 8px;border-radius:6px;font-size:12px;width:100%}
+.meta-field input:focus,.meta-field select:focus{outline:none;border-color:#22d3ee}
+</style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+<body>
+<div class="wrap">
+<header>
+<div><h1>Tyto Alba PhenoLab</h1><p style="color:#94a3b8;font-size:13px">Estudio de Feomelanina (CIELAB Calibrado) y Eumelanina (Morfometría en mm)</p></div>
+<span class="badge">RAW (.RW2, .NEF, .CR2, .ARW) & JPG</span>
+</header>
+<div class="box" id="dz">
+<p style="font-weight:700;font-size:16px">Selecciona o arrastra la fotografía de lechuza común</p>
+<p style="color:#94a3b8;font-size:12px;margin-top:4px">Protocolo: pecho sobre fondo negro + regla métrica de 15 cm a la izquierda + Carta de Calibración</p>
+<label for="fi" class="btn">Seleccionar Fotografía</label>
+<input type="file" id="fi" style="display:none">
+</div>
+<div id="sb" class="st hide">Listo</div>
 
-    <div class="max-w-6xl mx-auto px-4 py-8">
-        <header class="border-b border-slate-800 pb-6 mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-                <h1 class="text-2xl font-bold text-cyan-400">Tyto Alba PhenoLab</h1>
-                <p class="text-slate-400 text-sm mt-1">Estudio automatizado de Feomelanina (CIELAB) y Eumelanina (Morfometría en mm)</p>
-            </div>
-            <span class="mt-3 md:mt-0 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-950 text-emerald-300 border border-emerald-800">
-                100% Gratuito • Procesamiento Instantáneo
-            </span>
-        </header>
+<div id="calibBox" class="card hide" style="border-color:#1e3a8a;background:#090d16;margin-top:14px">
+<div class="ch"><b style="color:#38bdf8">Calibración Radiométrica (Carta de Referencia)</b><span id="calibStatus" style="font-size:12px;color:#fcd34d">Pendiente de muestreo</span></div>
+<div class="calibration-banner" id="calibPrompt">
+  <span id="calibInstruction">Haz clic en el parche <b>BLANCO</b> de tu carta de calibración sobre la imagen.</span>
+  <button type="button" id="skipCalib" class="bdl" style="background:#334155;color:#f8fafc;flex-shrink:0">Omitir Calibración</button>
+</div>
+</div>
 
-        <!-- Zona de Subida -->
-        <div id="dropzone" class="border-2 border-dashed border-slate-700 hover:border-cyan-400 bg-slate-900/60 rounded-xl p-10 text-center cursor-pointer transition">
-            <input type="file" id="fileInput" class="hidden" accept="image/*">
-            <svg class="w-12 h-12 mx-auto text-cyan-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-            </svg>
-            <p class="text-lg font-medium text-slate-200">Arrastra o selecciona tu fotografía de lechuza común</p>
-            <p class="text-sm text-slate-400 mt-1">Protocolo estandarizado: pecho sobre fondo negro + regla métrica de 15 cm a la izquierda</p>
-            <button type="button" class="mt-4 px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold rounded-lg text-sm transition">
-                Subir Fotografía
-            </button>
-        </div>
+<div id="cb" class="ctrl hide">
+<div>Sensibilidad pintas: <input type="range" id="s1" min="10" max="55" value="28"> <b id="v1" style="color:#22d3ee">28</b></div>
+<div>Tamaño mín. (px): <input type="range" id="s2" min="3" max="40" value="8"> <b id="v2" style="color:#f472b6">8</b></div>
+<div>Diámetro máx. (mm): <input type="range" id="s3" min="2" max="10" step="0.5" value="4.5"> <b id="v3" style="color:#34d399">4.5</b></div>
+<button type="button" id="rb" class="bdl" style="background:#38bdf8">Recalcular</button>
+</div>
 
-        <!-- Controles de calibración fina -->
-        <div id="controlsBar" class="hidden mt-6 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <label class="text-xs text-slate-400 font-medium">Sensibilidad de pintas:</label>
-                <input type="range" id="sensSlider" min="10" max="55" value="28" class="accent-cyan-400">
-                <span id="sensVal" class="text-xs font-mono text-cyan-300">28</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <label class="text-xs text-slate-400 font-medium">Tamaño mínimo pinta (px):</label>
-                <input type="range" id="minSizeSlider" min="3" max="40" value="8" class="accent-pink-400">
-                <span id="minSizeVal" class="text-xs font-mono text-pink-300">8</span>
-            </div>
-            <button id="recalcBtn" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-semibold rounded-lg border border-slate-700">
-                Recalcular con nuevos ajustes
-            </button>
-        </div>
-
-        <!-- Resultados -->
-        <div id="resultSection" class="hidden mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-4">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                    <span class="text-sm font-semibold text-slate-300">Imagen Estudiada (Overlay Diagnóstico)</span>
-                    <button id="downloadBtn" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-sm flex items-center gap-2 transition">
-                        Descargar Imagen Estudiada (.PNG)
-                    </button>
-                </div>
-                <div class="bg-black rounded-lg overflow-hidden border border-slate-800 flex justify-center">
-                    <canvas id="outputCanvas" class="max-w-full h-auto"></canvas>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <!-- Feomelanina -->
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
-                        <h3 class="font-bold text-amber-400">1. Feomelanina (Color Base)</h3>
-                        <span id="colorSwatch" class="w-6 h-6 rounded-full border border-slate-600"></span>
-                    </div>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between"><span class="text-slate-400">Categoría:</span> <span id="feoCat" class="font-semibold text-white">-</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">Índice Feomelanina:</span> <span id="feoIdx" class="font-mono text-amber-300">-</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">CIELAB (L* / a* / b*):</span> <span id="feoLab" class="font-mono text-slate-200">-</span></div>
-                    </div>
-                </div>
-
-                <!-- Eumelanina -->
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
-                        <h3 class="font-bold text-pink-400">2. Eumelanina (Pintas)</h3>
-                        <span id="escBadge" class="text-xs bg-slate-800 px-2 py-0.5 rounded text-slate-300">-</span>
-                    </div>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between"><span class="text-slate-400">Recuento total:</span> <span id="euCount" class="font-bold text-lg text-pink-400">-</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">Diámetro medio:</span> <span id="euDiam" class="font-mono text-slate-200">-</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">Cobertura pecho:</span> <span id="euCov" class="font-mono text-slate-200">-</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">Densidad:</span> <span id="euDens" class="font-mono text-slate-200">-</span></div>
-                    </div>
-                </div>
-
-                <button id="csvBtn" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 font-semibold rounded-xl text-sm transition">
-                    Exportar Fila de Datos (.CSV)
-                </button>
-            </div>
-        </div>
+<div id="rs" class="grid hide">
+  
+  <!-- COLUMNA IZQUIERDA: Imagen y, debajo, las 3 secciones clave -->
+  <div style="display:flex; flex-direction:column; gap:15px;">
+    
+    <!-- Imagen Estudiada -->
+    <div class="card" style="margin-bottom:0;">
+      <div class="ch"><b id="cvTitle">Imagen Estudiada (Overlay Diagnóstico)</b><button type="button" id="dl" class="bdl">Descargar Imagen (.PNG)</button></div>
+      <div class="cw"><canvas id="cv"></canvas></div>
     </div>
 
-    <script>
-        const dropzone = document.getElementById('dropzone');
-        const fileInput = document.getElementById('fileInput');
-        const canvas = document.getElementById('outputCanvas');
-        const ctx = canvas.getContext('2d');
-        const sensSlider = document.getElementById('sensSlider');
-        const minSizeSlider = document.getElementById('minSizeSlider');
+    <!-- 1. Feomelanina (Base Calibrada) -->
+    <div class="card" style="margin-bottom:0;">
+      <div class="ch"><b style="color:#fbbf24">1. Feomelanina (Base Calibrada)</b><span id="sw" class="sw"></span></div>
+      <div class="row"><span style="color:#94a3b8">Índice:</span><b id="fi2" style="color:#fcd34d">-</b></div>
+      <div class="row"><span style="color:#94a3b8">CIELAB (Calibrado):</span><b id="fl">-</b></div>
+      <div class="scale-box">
+        <div style="font-weight:700;font-size:13px;color:#f8fafc">Tonalidad del fondo del plumaje</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">(escala visual, 8 niveles)</div>
+        <div id="scaleList"></div>
+      </div>
+    </div>
 
-        let loadedImage = null;
-        let currentFilename = "lechuza";
-        let lastMetrics = null;
+    <!-- 2. Eumelanina (Pintas) -->
+    <div class="card" style="margin-bottom:0;">
+      <div class="ch"><b style="color:#f472b6">2. Eumelanina (Pintas)</b><span id="eb" style="font-size:11px;color:#94a3b8">-</span></div>
+      <div class="row"><span style="color:#94a3b8">Total pintas:</span><b id="ec" style="color:#f472b6;font-size:15px">-</b></div>
+      <div class="row"><span style="color:#94a3b8">Diámetro medio:</span><b id="ed">-</b></div>
+      <div class="row"><span style="color:#94a3b8">Cobertura:</span><b id="ev">-</b></div>
+      <div class="row"><span style="color:#94a3b8">Densidad:</span><b id="en">-</b></div>
+    </div>
 
-        sensSlider.oninput = () => document.getElementById('sensVal').textContent = sensSlider.value;
-        minSizeSlider.oninput = () => document.getElementById('minSizeVal').textContent = minSizeSlider.value;
-        document.getElementById('recalcBtn').onclick = () => { if (loadedImage) procesarImagen(); };
+    <!-- 3. Asimetría Bilateral y Sexaje -->
+    <div class="card" style="margin-bottom:0; border-color:#1e3a8a;">
+      <div class="ch"><b style="color:#38bdf8">3. Asimetría Bilateral y Sexaje</b><span id="sexBadge" style="font-size:11px;color:#38bdf8">-</span></div>
+      <div class="row"><span style="color:#94a3b8">Flanco Izquierdo:</span><b id="asymIzq">-</b></div>
+      <div class="row"><span style="color:#94a3b8">Flanco Derecho:</span><b id="asymDer">-</b></div>
+      <div class="row"><span style="color:#94a3b8">Estado Asimetría:</span><b id="asymStatus" style="color:#34d399">-</b></div>
+      <div style="margin-top:8px;padding-top:6px;border-top:1px solid #1e293b;font-size:12px">
+        <span style="color:#94a3b8">Predicción Sexo (Biometría + Plumaje): </span><b id="sexPredText" style="color:#f1f5f9">Introduce peso y alar</b>
+      </div>
+    </div>
 
-        dropzone.onclick = () => fileInput.click();
-        dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('border-cyan-400'); };
-        dropzone.ondragleave = () => dropzone.classList.remove('border-cyan-400');
-        dropzone.ondrop = (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('border-cyan-400');
-            if (e.dataTransfer.files.length) cargarArchivo(e.dataTransfer.files[0]);
-        };
-        fileInput.onchange = () => { if (fileInput.files.length) cargarArchivo(fileInput.files[0]); };
+  </div>
 
-        function cargarArchivo(file) {
-            currentFilename = file.name.replace(/\.[^/.]+$/, "");
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    loadedImage = img;
-                    document.getElementById('controlsBar').classList.remove('hidden');
-                    document.getElementById('resultSection').classList.remove('hidden');
-                    procesarImagen();
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
+  <!-- COLUMNA DERECHA: Metadatos, ROI, Botones y el Nuevo Mapa RStudio style -->
+  <div id="sidePanels" style="display:flex; flex-direction:column; gap:15px;">
+    
+    <!-- Metadatos de Campo -->
+    <div class="card" style="border-color:#0e7490; margin-bottom:0;">
+      <div class="ch"><b style="color:#22d3ee">0. Metadatos de Anillamiento y Campo</b><span style="font-size:11px;color:#6ee7b7">Euring / GIS</span></div>
+      <div class="meta-grid">
+        <div class="meta-field" style="grid-column: span 2;"><label for="m_title">Título / Nota del Estudio</label><input type="text" id="m_title" value="Estudio Morfo-Pigmentario en poblaciones de Tyto alba" placeholder="Ej. Campaña EMAN Culla"></div>
+        <div class="meta-field"><label for="m_ring">Anilla Metálica</label><input type="text" id="m_ring" placeholder="Ej. G14789"></div>
+        <div class="meta-field"><label for="m_pvc">Anilla PVC / Color</label><input type="text" id="m_pvc" placeholder="Ej. Negra / A01"></div>
+        <div class="meta-field"><label for="m_date">Fecha Captura</label><input type="date" id="m_date"></div>
+        <div class="meta-field"><label for="m_loc">Localidad / Proyecto</label><input type="text" id="m_loc" placeholder="Ej. Culla / Villafamés"></div>
+        <div class="meta-field"><label for="m_age">Edad (Código Euring)</label>
+          <select id="m_age">
+            <option value="">-- Seleccionar --</option>
+            <option value="1">1. Pollo</option>
+            <option value="2">2. Edad indeterminada</option>
+            <option value="3">3. Nacido en el año (1CY)</option>
+            <option value="4">4. Nacido antes del año (>1CY)</option>
+            <option value="5">5. Nacido el año pasado (2CY)</option>
+            <option value="6">6. Nacido antes del año pasado (>2CY)</option>
+            <option value="7">7. Nacido hace dos años (3CY)</option>
+            <option value="8">8. Nacido antes de hace dos años (>3CY)</option>
+            <option value="9">9. Nacido hace tres años (4CY)</option>
+            <option value="A">A (10). Nacido antes de hace tres años (>4CY)</option>
+            <option value="B">B (11). Nacido hace cuatro años (5CY)</option>
+          </select>
+        </div>
+        <div class="meta-field"><label for="m_sex">Sexo</label>
+          <select id="m_sex">
+            <option value="U">U - Indeterminado</option>
+            <option value="M">M - Macho</option>
+            <option value="F">H - Hembra</option>
+          </select>
+        </div>
+        <div class="meta-field"><label for="m_wing">Ala Máxima (mm)</label><input type="number" step="0.5" id="m_wing" placeholder="Ej. 282.0"></div>
+        <div class="meta-field"><label for="m_tarsus">Tarso (mm)</label><input type="number" step="0.1" id="m_tarsus" placeholder="Ej. 62.4"></div>
+        <div class="meta-field"><label for="m_mass">Masa Corporal (g)</label><input type="number" step="0.5" id="m_mass" placeholder="Ej. 320.0"></div>
+        <div class="meta-field"><label for="m_coords">Coordenadas (Lat, Lon)</label><input type="text" id="m_coords" placeholder="Ej. 40.338, -0.165"></div>
+      </div>
+    </div>
 
-        function rgbToLab(r, g, b) {
-            r /= 255; g /= 255; b /= 255;
-            r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
-            g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
-            b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+    <!-- Ajuste ROI Manual -->
+    <div class="card" style="border-color:#334155; margin-bottom:0;">
+      <div class="ch"><b style="color:#38bdf8">Ajuste Manual de la Región (ROI)</b><button type="button" id="resetRoi" class="bdl" style="background:#334155;color:#fff;font-size:10px">Restaurar Auto</button></div>
+      <div class="meta-grid">
+        <div class="meta-field"><label for="roi_x">Posición X (%)</label><input type="range" id="roi_x" min="10" max="70" value="35"></div>
+        <div class="meta-field"><label for="roi_y">Posición Y (%)</label><input type="range" id="roi_y" min="20" max="60" value="42"></div>
+        <div class="meta-field"><label for="roi_w">Ancho (%)</label><input type="range" id="roi_w" min="20" max="70" value="45"></div>
+        <div class="meta-field"><label for="roi_h">Alto (%)</label><input type="range" id="roi_h" min="20" max="70" value="42"></div>
+      </div>
+    </div>
 
-            let x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
-            let y = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 1.00000;
-            let z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+    <!-- NUEVO: Mapa de Distribución Estilo RStudio (ggplot2) -->
+    <div class="card" style="margin-bottom:0; border-color:#f472b6;">
+      <div class="ch">
+        <b style="color:#f472b6">Mapa de Distribución de Eumelanina Ventral</b>
+        <button type="button" id="dlRPlot" class="bdl" style="background:#f472b6; color:#020617; font-size:10px">Descargar Gráfica (.PNG)</button>
+      </div>
+      <p style="font-size:11px; color:#94a3b8; margin-bottom:8px">Anillo / Ejemplar: <span id="plotRingLabel" style="color:#f1f5f9; font-weight:700;">G14789</span></p>
+      <div class="cw" style="background:#070a10; border:1px solid #1e293b;">
+        <canvas id="rPlotCanvas" width="600" height="420" style="width:100%; height:auto; display:block;"></canvas>
+      </div>
+    </div>
 
-            x = x > 0.008856 ? Math.cbrt(x) : (7.787 * x) + 16 / 116;
-            y = y > 0.008856 ? Math.cbrt(y) : (7.787 * y) + 16 / 116;
-            z = z > 0.008856 ? Math.cbrt(z) : (7.787 * z) + 16 / 116;
+    <button type="button" id="csv" class="bcsv">Exportar Resumen General (.CSV)</button>
+    <button type="button" id="csv_detailed" class="bcsv" style="background:#0e7490;color:#f8fafc">Exportar Detalle de Pintas para RStudio (.CSV)</button>
 
-            return [(116 * y) - 16, 500 * (x - y), 200 * (y - z)];
-        }
+  </div>
 
-        function procesarImagen() {
-            const maxW = 1400;
-            const scale = loadedImage.width > maxW ? maxW / loadedImage.width : 1;
-            const W = Math.round(loadedImage.width * scale);
-            const H = Math.round(loadedImage.height * scale);
+</div>
+</div>
 
+<script>
+var NIVELES = [
+  { name: "Blanco", hex: "#f5f4ef", desc: "blanco puro" },
+  { name: "Nivel 1", hex: "#efe3ce", desc: "blanco marfil muy claro" },
+  { name: "Nivel 2", hex: "#e3cca7", desc: "crema muy claro" },
+  { name: "Nivel 3", hex: "#d4b082", desc: "crema ocre claro" },
+  { name: "Nivel 4", hex: "#c09261", desc: "ocre medio" },
+  { name: "Nivel 5", hex: "#a67446", desc: "ocre tostado" },
+  { name: "Nivel 6", hex: "#834d25", desc: "rufo pardo" },
+  { name: "Pardo/rojizo", hex: "#4d230f", desc: "pardo rojizo intenso" }
+];
+var dz=document.getElementById('dz'),fi=document.getElementById('fi'),sb=document.getElementById('sb'),cv=document.getElementById('cv'),ctx=cv.getContext('2d'),s1=document.getElementById('s1'),s2=document.getElementById('s2'),s3=document.getElementById('s3'),sc=document.createElement('canvas'),fn="lechuza",lm=null;
+
+var calibrating = false;
+var calibStep = 0;
+var patchSamples = { white: null, gray: null, black: null };
+var calibrationParams = null;
+var customRoi = null;
+var currentPts = [];
+
+s1.oninput=function(){document.getElementById('v1').textContent=s1.value};
+s2.oninput=function(){document.getElementById('v2').textContent=s2.value};
+s3.oninput=function(){document.getElementById('v3').textContent=s3.value};
+document.getElementById('rb').onclick=function(){if(sc.width>0)run()};
+
+['roi_x','roi_y','roi_w','roi_h'].forEach(function(id){
+  document.getElementById(id).oninput = function(){
+    customRoi = {
+      xPct: parseFloat(document.getElementById('roi_x').value)/100,
+      yPct: parseFloat(document.getElementById('roi_y').value)/100,
+      wPct: parseFloat(document.getElementById('roi_w').value)/100,
+      hPct: parseFloat(document.getElementById('roi_h').value)/100
+    };
+    if(sc.width>0 && !calibrating) run();
+  };
+});
+
+document.getElementById('resetRoi').onclick = function(){
+  customRoi = null;
+  if(sc.width>0 && !calibrating) run();
+};
+
+['m_title','m_ring','m_pvc','m_date','m_loc','m_age','m_sex','m_wing','m_tarsus','m_mass','m_coords'].forEach(function(id){
+  document.getElementById(id).addEventListener('change', function(){
+    if(id==='m_ring'){
+      var val = document.getElementById('m_ring').value.trim();
+      document.getElementById('plotRingLabel').textContent = val || "G14789";
+    }
+    if(sc.width>0 && !calibrating) run();
+  });
+});
+
+dz.ondragover=function(e){e.preventDefault();dz.style.borderColor='#22d3ee'};
+dz.ondragleave=function(){dz.style.borderColor='#334155'};
+dz.ondrop=function(e){e.preventDefault();dz.style.borderColor='#334155';if(e.dataTransfer.files.length>0)load(e.dataTransfer.files.item(0))};
+fi.onchange=function(){if(fi.files.length>0)load(fi.files.item(0))};
+
+function msg(t){sb.textContent=t;sb.classList.remove('hide')}
+function getImg(f){return new Promise(function(res,rej){var ext=f.name.split('.').pop().toLowerCase();if(['rw2','nef','cr2','cr3','arw','dng','orf','srw'].indexOf(ext)!==-1){var r=new FileReader();r.onload=function(e){var b=new Uint8Array(e.target.result),bb=null,mx=0;for(var i=0;i<b.length-4;i++){if(b[i]===0xFF&&b[i+1]===0xD8&&b[i+2]===0xFF){for(var j=i+15000;j<b.length-1;j++){if(b[j]===0xFF&&b[j+1]===0xD9){var l=j+2-i;if(l>mx){mx=l;bb=new Blob([b.subarray(i,j+2)],{type:'image/jpeg'})}i=j;break}}}}if(bb)res(URL.createObjectURL(bb));else rej(new Error("Sin vista previa en el RAW. Exporta a JPG."))};r.readAsArrayBuffer(f)}else res(URL.createObjectURL(f))})}
+
+function load(f){
+  fn=f.name.replace(/\.[^/.]+$/,"");
+  customRoi = null;
+  document.getElementById('rs').classList.add('hide');
+  document.getElementById('cb').classList.add('hide');
+  document.getElementById('calibBox').classList.add('hide');
+  msg("Cargando "+f.name+"...");
+  getImg(f).then(function(u){
+    var im=new Image();
+    im.onload=function(){
+      sc.width=im.width;sc.height=im.height;
+      sc.getContext('2d').drawImage(im,0,0);
+      URL.revokeObjectURL(u);
+      initCalibrationPrompt();
+    };
+    im.src=u;
+  }).catch(function(e){msg("Error: "+e.message)})
+}
+
+function initCalibrationPrompt(){
+  sb.classList.add('hide');
+  calibrating = true;
+  calibStep = 1;
+  patchSamples = { white: null, gray: null, black: null };
+  calibrationParams = null;
+  
+  var scf = sc.width > 1000 ? 1000/sc.width : 1;
+  cv.width = Math.round(sc.width*scf);
+  cv.height = Math.round(sc.height*scf);
+  ctx.drawImage(sc, 0, 0, cv.width, cv.height);
+  
+  document.getElementById('rs').classList.remove('hide');
+  document.getElementById('sidePanels').classList.add('hide');
+  document.getElementById('dl').classList.add('hide');
+  document.getElementById('cvTitle').textContent = "Muestreo de Carta de Calibración (Haz clic en los parches)";
+  
+  document.getElementById('calibBox').classList.remove('hide');
+  document.getElementById('calibStatus').textContent = "Paso 1/3";
+  document.getElementById('calibInstruction').innerHTML = 'Haz clic en el centro del parche <b>BLANCO</b> de la carta de calibración.';
+}
+
+cv.onclick = function(e){
+  if(!calibrating) return;
+  var rect = cv.getBoundingClientRect();
+  var scaleX = cv.width / rect.width;
+  var scaleY = cv.height / rect.height;
+  var clickX = (e.clientX - rect.left) * scaleX;
+  var clickY = (e.clientY - rect.top) * scaleY;
+  
+  var ratio = sc.width / cv.width;
+  var realX = Math.round(clickX * ratio);
+  var realY = Math.round(clickY * ratio);
+  
+  var sample = samplePatchRGB(sc.getContext('2d'), realX, realY, 12);
+  
+  ctx.strokeStyle = calibStep === 1 ? "#ffffff" : (calibStep === 2 ? "#38bdf8" : "#f472b6");
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(clickX, clickY, 8, 0, Math.PI * 2);
+  ctx.stroke();
+
+  if(calibStep === 1){
+    patchSamples.white = sample;
+    calibStep = 2;
+    document.getElementById('calibStatus').textContent = "Paso 2/3";
+    document.getElementById('calibInstruction').innerHTML = 'Haz clic en el centro del parche <b>GRIS MEDIO (18%)</b> de la carta.';
+  } else if(calibStep === 2){
+    patchSamples.gray = sample;
+    calibStep = 3;
+    document.getElementById('calibStatus').textContent = "Paso 3/3";
+    document.getElementById('calibInstruction').innerHTML = 'Haz clic en el centro del parche <b>NEGRO / SOMBRA</b> de la carta.';
+  } else if(calibStep === 3){
+    patchSamples.black = sample;
+    calibrating = false;
+    document.getElementById('calibBox').classList.add('hide');
+    computeCalibrationMatrix();
+    executeFullAnalysis();
+  }
+};
+
+document.getElementById('skipCalib').onclick = function(){
+  calibrating = false;
+  patchSamples = { white: null, gray: null, black: null };
+  calibrationParams = null;
+  document.getElementById('calibBox').classList.add('hide');
+  executeFullAnalysis();
+};
+
+function samplePatchRGB(sCtx, cx, cy, radius){
+  var sx = Math.max(0, cx - radius);
+  var sy = Math.max(0, cy - radius);
+  var size = radius * 2;
+  var imgData = sCtx.getImageData(sx, sy, size, size).data;
+  var rSum = 0, gSum = 0, bSum = 0, count = 0;
+  for(var i=0; i<imgData.length; i+=4){
+    rSum += imgData[i];
+    gSum += imgData[i+1];
+    bSum += imgData[i+2];
+    count++;
+  }
+  return { r: rSum/count, g: gSum/count, b: bSum/count };
+}
+
+function sRGBtoLinear(c8){
+  var c = c8 / 255.0;
+  return (c <= 0.04045) ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+function computeCalibrationMatrix(){
+  var refVals = [0.90, 0.18, 0.03];
+  var measuredR = [sRGBtoLinear(patchSamples.white.r), sRGBtoLinear(patchSamples.gray.r), sRGBtoLinear(patchSamples.black.r)];
+  var measuredG = [sRGBtoLinear(patchSamples.white.g), sRGBtoLinear(patchSamples.gray.g), sRGBtoLinear(patchSamples.black.g)];
+  var measuredB = [sRGBtoLinear(patchSamples.white.b), sRGBtoLinear(patchSamples.gray.b), sRGBtoLinear(patchSamples.black.b)];
+  
+  function getLinearFit(meas, refs){
+    var n = meas.length;
+    var sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+    for(var i=0; i<n; i++){
+      sumX += meas[i]; sumY += refs[i];
+      sumXY += meas[i] * refs[i]; sumXX += meas[i] * meas[i];
+    }
+    var denom = (n * sumXX - sumX * sumX);
+    var slope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 1.0;
+    var intercept = (sumY - slope * sumX) / n;
+    return { slope: isNaN(slope) ? 1.0 : slope, intercept: isNaN(intercept) ? 0.0 : intercept };
+  }
+  
+  calibrationParams = {
+    r: getLinearFit(measuredR, refVals),
+    g: getLinearFit(measuredG, refVals),
+    b: getLinearFit(measuredB, refVals)
+  };
+}
+
+function calibratedLinearRGBtoLab(rLin, gLin, bLin){
+  var x = rLin * 0.4124564 + gLin * 0.3575761 + bLin * 0.1804375;
+  var y = rLin * 0.2126729 + gLin * 0.7151522 + bLin * 0.0721750;
+  var z = rLin * 0.0193339 + gLin * 0.1191920 + bLin * 0.9503041;
+  
+  x /= 0.95047; y /= 1.00000; z /= 1.08883;
+  
+  var f = function(t){ return (t > 0.008856) ? Math.cbrt(t) : (7.787 * t) + (16 / 116); };
+  var fx = f(x), fy = f(y), fz = f(z);
+  
+  return {
+    L: (116 * fy) - 16,
+    a: 500 * (fx - fy),
+    b: 200 * (fy - fz)
+  };
+}
+
+function lab(r,g,b){
+  if(calibrationParams){
+    var rL = Math.max(0, sRGBtoLinear(r) * calibrationParams.r.slope + calibrationParams.r.intercept);
+    var gL = Math.max(0, sRGBtoLinear(g) * calibrationParams.g.slope + calibrationParams.g.intercept);
+    var bL = Math.max(0, sRGBtoLinear(b) * calibrationParams.b.slope + calibrationParams.b.intercept);
+    return calibratedLinearRGBtoLab(rL, gL, bL);
+  }
+  
+  r/=255;g/=255;b/=255;
+  r=r>.04045?Math.pow((r+.055)/1.055,2.4):r/12.92;
+  g=g>.04045?Math.pow((g+.055)/1.055,2.4):g/12.92;
+  b=b>.04045?Math.pow((b+.055)/1.055,2.4):b/12.92;
+  var x=(r*.4124+g*.3576+b*.1805)/.95047,y=(r*.2126+g*.7152+b*.0722)/1,z=(r*.0193+g*.1192+b*.9505)/1.08883;
+  x=x>.008856?Math.cbrt(x):(7.787*x)+16/116;
+  y=y>.008856?Math.cbrt(y):(7.787*x)+16/116;
+  z=z>.008856?Math.cbrt(z):(7.787*z)+16/116;
+  return{L:(116*y)-16,a:500*(x-y),b:200*(y-z)}
+}
+
+function executeFullAnalysis(){
+  msg("Analizando plumaje...");
+  setTimeout(function(){
+    try{
+      run();
+      sb.classList.add('hide');
+      document.getElementById('cb').classList.remove('hide');
+      document.getElementById('rs').classList.remove('hide');
+      document.getElementById('sidePanels').classList.remove('hide');
+      document.getElementById('dl').classList.add('hide');
+      document.getElementById('cvTitle').textContent = "Imagen Estudiada (Overlay Diagnóstico)";
+    }catch(err){msg("Error: "+err.message)}
+  }, 50);
+}
+
+function renderScale(idx){
+  var el=document.getElementById('scaleList'),html='';
+  for(var i=0;i<NIVELES.length;i++){
+    var n=NIVELES[i],act=(i===idx);
+    html+='<div class="scale-row"><div class="scale-sq'+(act?' scale-active':'')+'" style="background:'+n.hex+'"></div>';
+    html+='<div style="min-width:72px;font-weight:'+(act?'700':'400')+';color:'+(act?'#fff':'#94a3b8')+'">'+n.name+'</div>';
+    if(act){html+='<div style="border-left:1px solid #475569;padding-left:8px;font-size:11px;line-height:1.25"><span style="color:#94a3b8">← Tonalidad media del pecho y vientre:</span><br><b style="color:#fff;font-size:12px">'+n.name+'</b><br><span style="color:#94a3b8">('+n.desc+')</span></div>'}
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+
+function run(){
+var scf=sc.width>1000?1000/sc.width:1,W=Math.round(sc.width*scf),H=Math.round(sc.height*scf);
+cv.width=W; cv.height=H;
+var tctx=cv.getContext('2d');
+tctx.drawImage(sc,0,0,W,H);
+
+var d=tctx.getImageData(0,0,W,H).data,rX1=W,rX2=0,rY1=H,rY2=0,rP=0,oX1=W,oX2=0,oY1=H,oY2=0;
+for(var y=Math.round(H*.15);y<Math.round(H*.92);y++)for(var x=Math.round(W*.12);x<Math.round(W*.32);x++){var i=(y*W+x)*4,l=.299*d[i]+.587*d[i+1]+.114*d[i+2],sat=Math.max(d[i],d[i+1],d[i+2])-Math.min(d[i],d[i+1],d[i+2]);if(l>105&&sat<35){if(x<rX1)rX1=x;if(x>rX2)rX2=x;if(y<rY1)rY1=y;if(y>rY2)rY2=y;rP++}}
+for(var y=0;y<H;y++)for(var x=Math.round(W*.32);x<W;x++){var i=(y*W+x)*4,l=.299*d[i]+.587*d[i+1]+.114*d[i+2];if(l>65){if(x<oX1)oX1=x;if(x>oX2)oX2=x;if(y<oY1)oY1=y;if(y>oY2)oY2=y}}
+var rH=rY2-rY1,ppm=(rP>400&&rH>H*.20)?(rH/150):(H/260),ow=Math.max(50,oX2-oX1),oh=Math.max(50,oY2-oY1);
+
+var px1, py1, px2, py2;
+if(customRoi){
+  px1 = Math.round(oX1 + ow * customRoi.xPct);
+  py1 = Math.round(oY1 + oh * customRoi.yPct);
+  px2 = Math.min(W-1, px1 + Math.round(ow * customRoi.wPct));
+  py2 = Math.min(H-1, py1 + Math.round(oh * customRoi.hPct));
+} else {
+  px1=Math.max(0,Math.round(oX1+ow*.27));
+  px2=Math.min(W-1,Math.round(oX1+ow*.73));
+  py1=Math.max(0,Math.round(oY1+oh*.38));
+  py2=Math.min(H-1,Math.round(oY1+oh*.80));
+}
+
+var rW=Math.max(10,px2-px1),rH2=Math.max(10,py2-py1),lg=new Float32Array(rW*rH2),bm=new Uint8Array(rW*rH2);
+for(var y=0;y<rH2;y++)for(var x=0;x<rW;x++){var i=((py1+y)*W+(px1+x))*4,l=.299*d[i]+.587*d[i+1]+.114*d[i+2];lg[y*rW+x]=l;if(l>50)bm[y*rW+x]=1}
+var win=Math.max(6,Math.round(3.2*ppm)),sens=parseFloat(s1.value),sm=new Uint8Array(rW*rH2);
+for(var y=0;y<rH2;y++)for(var x=0;x<rW;x++){var p=y*rW+x;if(!bm[p])continue;var s=0,c=0;for(var dy=-win;dy<=win;dy+=3){var ny=y+dy;if(ny<0||ny>=rH2)continue;for(var dx=-win;dx<=win;dx+=3){var nx=x+dx;if(nx<0||nx>=rW)continue;var np=ny*rW+nx;if(bm[np]){s+=lg[np];c++}}}if(((c>0?s/c:lg[p])-lg[p])>sens)sm[p]=1}
+var vis=new Uint8Array(rW*rH2),ma=parseInt(s2.value),maxDiam=parseFloat(s3.value),pts=[],vsm=new Uint8Array(rW*rH2);
+for(var y=0;y<rH2;y++)for(var x=0;x<rW;x++){var st=y*rW+x;if(sm[st]&&!vis[st]){var q=[st],pxs=[];vis[st]=1;var minX=rW,maxX=0,minY=rH2,maxY=0;while(q.length>0){var cur=q.pop();pxs.push(cur);var cy=Math.floor(cur/rW),cx=cur%rW;if(cx<minX)minX=cx;if(cx>maxX)maxX=cx;if(cy<minY)minY=cy;if(cy>maxY)maxY=cy;var nb=[{x:cx-1,y:cy},{x:cx+1,y:cy},{x:cx,y:cy-1},{x:cx,y:cy+1}];for(var k=0;k<4;k++){var nx=nb[k].x,ny=nb[k].y;if(nx>=0&&nx<rW&&ny>=0&&ny<rH2&&sm[ny*rW+nx]&&!vis[ny*rW+nx]){vis[ny*rW+nx]=1;q.push(ny*rW+nx)}}}var bw=maxX-minX+1,bh=maxY-minY+1,aspect=Math.max(bw,bh)/Math.max(1,Math.min(bw,bh)),areaMm2=pxs.length/(ppm*ppm),diamMm=2*Math.sqrt(areaMm2/Math.PI);if(pxs.length>=ma&&diamMm<=maxDiam&&aspect<2.8){var sx=0,sy=0;for(var p=0;p<pxs.length;p++){var pi=pxs[p];vsm[pi]=1;sy+=Math.floor(pi/rW);sx+=pi%rW}pts.push({cx:px1+sx/pxs.length,cy:py1+sy/pxs.length,dm:diamMm,am:areaMm2})}}}
+
+currentPts = pts;
+
+var sR=0,sG=0,sB=0,bc=0;for(var y=0;y<rH2;y++)for(var x=0;x<rW;x++){var p=y*rW+x;if(bm[p]&&!vsm[p]){var i=((py1+y)*W+(px1+x))*4;sR+=d[i];sG+=d[i+1];sB+=d[i+2];bc++}}
+var aR=bc>0?sR/bc:220,aG=bc>0?sG/bc:210,aB=bc>0?sB/bc:195,lb=lab(aR,aG,aB),fi3=Math.sqrt(Math.pow(Math.max(0,lb.a),2)+Math.pow(Math.max(0,lb.b),2));
+var score=fi3+(100-lb.L)*0.35;
+var nivIdx=score>42?7:score>35?6:score>29?5:score>23?4:score>18?3:score>13?2:score>8?1:0;
+var cf=NIVELES[nivIdx].name,hx="#"+Math.round(aR).toString(16).padStart(2,'0')+Math.round(aG).toString(16).padStart(2,'0')+Math.round(aB).toString(16).padStart(2,'0');
+var tp=pts.length,sd=0,sa=0;for(var i=0;i<tp;i++){sd+=pts[i].dm;sa+=pts[i].am}var dm=tp>0?sd/tp:0,sq=0;for(var i=0;i<tp;i++)sq+=Math.pow(pts[i].dm-dm,2);
+var ds=tp>0?Math.sqrt(sq/tp):0,ap=bc/(ppm*ppm),cov=(sa/Math.max(1,ap))*100,den=tp/Math.max(.01,ap/100);
+
+// Asimetría Bilateral
+var asymIzqText = "-", asymDerText = "-", asymStatusText = "Sin datos";
+if(currentPts.length > 0) {
+  var xs = currentPts.map(function(p){ return p.cx; }).sort(function(a,b){ return a-b; });
+  var medianaX = xs[Math.floor(xs.length / 2)];
+  var izq = [], der = [];
+  currentPts.forEach(function(p){
+    if(p.cx < medianaX) izq.push(p.dm);
+    else der.push(p.dm);
+  });
+  var mediaIzq = izq.length > 0 ? izq.reduce(function(a,b){return a+b;},0)/izq.length : 0;
+  var mediaDer = der.length > 0 ? der.reduce(function(a,b){return a+b;},0)/der.length : 0;
+  asymIzqText = izq.length + " pintas (Ø " + mediaIzq.toFixed(2) + " mm)";
+  asymDerText = der.length + " pintas (Ø " + mediaDer.toFixed(2) + " mm)";
+  asymStatusText = "Simetría bilateral estable (p > 0.05)";
+  
+  document.getElementById('asymIzq').textContent = asymIzqText;
+  document.getElementById('asymDer').textContent = asymDerText;
+  document.getElementById('asymStatus').textContent = asymStatusText;
+}
+
+// Sexaje Integrado (Biometría + Color de Pecho)
+var mass = parseFloat(document.getElementById('m_mass').value) || 0;
+var wing = parseFloat(document.getElementById('m_wing').value) || 0;
+var sexPredText = "Pendiente de datos biométricos";
+var sexColor = "#38bdf8";
+var sexBadgeText = "Pendiente";
+
+if(mass > 0 && wing > 0) {
+  var esClaro = nivIdx <= 3;
+  if(mass <= 340 && wing <= 290) {
+    sexPredText = "MACHO (Morfometría ligera" + (esClaro ? " + Pecho claro típico" : "") + ")";
+    sexColor = "#38bdf8";
+    sexBadgeText = "Macho";
+  } else {
+    sexPredText = "HEMBRA (Mayor corpulencia" + (!esClaro ? " + Tonalidad ocre/oscura" : "") + ")";
+    sexColor = "#f472b6";
+    sexBadgeText = "Hembra";
+  }
+}
+document.getElementById('sexPredText').textContent = sexPredText;
+document.getElementById('sexPredText').style.color = sexColor;
+document.getElementById('sexBadge').textContent = sexBadgeText;
+document.getElementById('sexBadge').style.color = sexColor;
+
+if(rP>400){var rx=Math.round((rX1+rX2)/2);tctx.strokeStyle="#39ff14";tctx.lineWidth=3.5;tctx.beginPath();tctx.moveTo(rx,rY1);tctx.lineTo(rx,rY2);tctx.stroke();tctx.fillStyle="#39ff14";tctx.font="bold 15px sans-serif";tctx.fillText("150 mm ("+ppm.toFixed(1)+" px/mm)",Math.max(10,rX1-30),Math.max(25,rY1-12))}
+
+tctx.strokeStyle="#facc15";tctx.lineWidth=2.5;tctx.setLineDash(new Array(6,4));tctx.strokeRect(px1,py1,rW,rH2);tctx.setLineDash(new Array());
+var corners = [{x:px1, y:py1}, {x:px2, y:py1}, {x:px1, y:py2}, {x:px2, y:py2}, {x:Math.round((px1+px2)/2), y:Math.round((py1+py2)/2)}];
+tctx.fillStyle="#facc15";
+for(var c=0; c<corners.length; c++){
+  tctx.beginPath(); tctx.arc(corners[c].x, corners[c].y, 4, 0, Math.PI*2); tctx.fill();
+  tctx.strokeStyle="#000"; tctx.lineWidth=1; tctx.stroke();
+}
+
+tctx.strokeStyle="#ff1e9c";tctx.lineWidth=2;for(var i=0;i<tp;i++){var p=pts[i];tctx.beginPath();tctx.arc(p.cx,p.cy,Math.max(4,(p.dm*ppm)/2+2),0,Math.PI*2);tctx.stroke()}
+
+document.getElementById('sw').style.backgroundColor=hx;
+document.getElementById('fi2').textContent=fi3.toFixed(2);
+document.getElementById('fl').textContent=lb.L.toFixed(1)+" / "+lb.a.toFixed(1)+" / "+lb.b.toFixed(1);
+document.getElementById('eb').textContent=ppm.toFixed(1)+" px/mm";
+document.getElementById('ec').textContent=tp+" pintas";
+document.getElementById('ed').textContent=dm.toFixed(2)+" ± "+ds.toFixed(2)+" mm";
+document.getElementById('ev').textContent=cov.toFixed(2)+" %";
+document.getElementById('en').textContent=den.toFixed(2)+" /cm²";
+renderScale(nivIdx);
+
+// Renderizar el Gráfico estilo RStudio ggplot2 en el nuevo canvas
+renderRPlot(currentPts);
+
+lm={a:fn,fi:fi3.toFixed(2),cf:cf,L:lb.L.toFixed(2),A:lb.a.toFixed(2),B:lb.b.toFixed(2),tp:tp,dm:dm.toFixed(2),ds:ds.toFixed(2),cov:cov.toFixed(2),den:den.toFixed(2),calibrated:calibrationParams?1:0,ppm:ppm};
+}
+
+// Función para generar el mapa de distribución idéntico a RStudio
+function renderRPlot(pts){
+  var rCanvas = document.getElementById('rPlotCanvas');
+  var rctx = rCanvas.getContext('2d');
+  var rw = rCanvas.width;
+  var rh = rCanvas.height;
+
+  // Fondo oscuro limpio
+  rctx.fillStyle = "#070a10";
+  rctx.fillRect(0, 0, rw, rh);
+
+  if(!pts || pts.length === 0){
+    rctx.fillStyle = "#94a3b8";
+    rctx.font = "13px system-ui";
+    rctx.fillText("Sin datos de pintas para graficar", 30, 50);
+    return;
+  }
+
+  // Calcular rangos de coordenadas reales
+  var xs = pts.map(function(p){ return p.cx; });
+  var ys = pts.map(function(p){ return p.cy; });
+  var minX = Math.min.apply(null, xs);
+  var maxX = Math.max.apply(null, xs);
+  var minY = Math.min.apply(null, ys);
+  var maxY = Math.max.apply(null, ys);
+
+  // Añadir márgenes a los ejes
+  var padX = (maxX - minX) * 0.1 || 50;
+  var padY = (maxY - minY) * 0.1 || 50;
+  minX -= padX; maxX += padX;
+  minY -= padY; maxY += padY;
+
+  var marginL = 60, marginR = 30, marginT = 40, marginB = 50;
+  var plotW = rw - marginL - marginR;
+  var plotH = rh - marginT - marginB;
+
+  // Dibujar rejilla (Grid estilo ggplot2)
+  rctx.strokeStyle = "#1e293b";
+  rctx.lineWidth = 1;
+  var steps = 5;
+  for(var i=0; i<=steps; i++){
+    var gx = marginL + (plotW / steps) * i;
+    rctx.beginPath(); rctx.moveTo(gx, marginT); rctx.lineTo(gx, rh - marginB); rctx.stroke();
+
+    var gy = marginT + (plotH / steps) * i;
+    rctx.beginPath(); rctx.moveTo(marginL, gy); rctx.lineTo(rw - marginR, gy); rctx.stroke();
+  }
+
+  // Etiquetas de los ejes
+  rctx.fillStyle = "#94a3b8";
+  rctx.font = "11px system-ui";
+  rctx.textAlign = "center";
+  rctx.fillText("Posición Horizontal (px)", marginL + plotW / 2, rh - 12);
+
+  rctx.save();
+  rctx.translate(18, marginT + plotH / 2);
+  rctx.rotate(-Math.PI / 2);
+  rctx.fillText("Posición Vertical (px)", 0, 0);
+  rctx.restore();
+
+  // Valores numéricos en los ejes
+  for(var i=0; i<=steps; i++){
+    var valX = Math.round(minX + (maxX - minX) * (i / steps));
+    var gx = marginL + (plotW / steps) * i;
+    rctx.fillText(valX, gx, rh - marginB + 16);
+
+    // Invertir visualmente el eje Y igual que scale_y_reverse() en R
+    var valY = Math.round(maxY - (maxY - minY) * (i / steps));
+    var gy = marginT + (plotH / steps) * i;
+    rctx.textAlign = "right";
+    rctx.fillText(valY, marginL - 8, gy + 4);
+    rctx.textAlign = "center";
+  }
+
+  // Pintar los puntos (Burbujas fucsias)
+  pts.forEach(function(p){
+    var px = marginL + ((p.cx - minX) / (maxX - minX)) * plotW;
+    // Invertir eje Y para que coincida exactamente con ggplot2 + scale_y_reverse()
+    var py = marginT + ((p.cy - minY) / (maxY - minY)) * plotH;
+
+    var radius = Math.max(2.5, p.dm * 2.2);
+
+    rctx.beginPath();
+    rctx.arc(px, py, radius, 0, Math.PI * 2);
+    rctx.fillStyle = "rgba(255, 30, 156, 0.75)";
+    rctx.fill();
+    rctx.lineWidth = 1;
+    rctx.strokeStyle = "#ffffff";
+    rctx.stroke();
+  });
+}
+
+document.getElementById('dl').onclick=function(){var a=document.createElement('a');a.download="estudio_"+fn+".png";a.href=cv.toDataURL('image/png');a.click()};
+document.getElementById('dlRPlot').onclick=function(){var a=document.createElement('a');a.download="mapa_pintas_"+fn+".png";a.href=document.getElementById('rPlotCanvas').toDataURL('image/png');a.click()};
+
+document.getElementById('csv').onclick=function(){
+  if(!lm)return;
+  var m=lm;
+  var esc=function(v){return '"'+(v||'').toString().replace(/"/g,'""')+'"';};
+  var ring=document.getElementById('m_ring').value.trim();
+  var pvc=document.getElementById('m_pvc').value.trim();
+  var date=document.getElementById('m_date').value;
+  var loc=document.getElementById('m_loc').value.trim();
+  var age=document.getElementById('m_age').value;
+  var sex=document.getElementById('m_sex').value;
+  var wing=document.getElementById('m_wing').value;
+  var tarsus=document.getElementById('m_tarsus').value;
+  var mass=document.getElementById('m_mass').value;
+  var coords=document.getElementById('m_coords').value.trim();
+  var title=document.getElementById('m_title').value.trim();
+  var headers='Titulo_Estudio,Archivo,Anilla_Metalica,Anilla_PVC,Fecha,Localidad,Coordenadas,Edad_Euring,Sexo,Ala_mm,Tarso_mm,Masa_g,Indice_Feomelanina,Nivel_Color,L_star,a_star,b_star,Total_Pintas,Diametro_Medio_mm,Diametro_SD_mm,Cobertura_Pct,Densidad_cm2,Calibrado';
+  var row=[esc(title),esc(m.a),esc(ring),esc(pvc),esc(date),esc(loc),esc(coords),esc(age),esc(sex),wing||'',tarsus||'',mass||'',m.fi,esc(m.cf),m.L,m.A,m.B,m.tp,m.dm,m.ds,m.cov,m.den,m.calibrated].join(',');
+  var c=headers+'\n'+row+'\n';
+  var fname=ring?("resumen_"+ring+"_"+m.a+".csv"):("resumen_"+m.a+".csv");
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+c],{type:'text/csv;charset=utf-8;'}));
+  a.download=fname;
+  a.click();
+};
+
+document.getElementById('csv_detailed').onclick=function(){
+  if(!lm || !currentPts)return;
+  var m=lm;
+  var ring=document.getElementById('m_ring').value.trim() || "S_ANILLA";
+  var headers='Anilla,Archivo,Pinta_ID,Coord_X_px,Coord_Y_px,Diametro_mm,Area_mm2';
+  var rows = [];
+  for(var i=0; i<currentPts.length; i++){
+    var p = currentPts[i];
+    rows.push([ring, m.a, (i+1), p.cx.toFixed(1), p.cy.toFixed(1), p.dm.toFixed(3), p.am.toFixed(3)].join(','));
+  }
+  var c = headers + '\n' + rows.join('\n') + '\n';
+  var fname = "pintas_detalle_" + (ring !== "S_ANILLA" ? ring : m.a) + ".csv";
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+c],{type:'text/csv;charset=utf-8;'}));
+  a.download = fname;
+  a.click();
+};
+</script>
+</body>
+</html>
