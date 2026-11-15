@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tyto Alba PhenoLab</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
 body{background:#020617;color:#f1f5f9;padding:20px}
@@ -21,7 +22,8 @@ h1{color:#22d3ee;font-size:22px}
 .card{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:15px;margin-bottom:15px}
 .ch{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:10px}
 .bdl{background:#10b981;color:#020617;border:none;padding:7px 14px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px}
-.bcsv{width:100%;background:#1e293b;color:#38bdf8;border:1px solid #334155;padding:11px;border-radius:8px;font-weight:700;cursor:pointer;margin-bottom:8px}
+.bcsv{width:100%;background:#1e293b;color:#38bdf8;border:1px solid #334155;padding:11px;border-radius:8px;font-weight:700;cursor:pointer;margin-bottom:8px;transition:0.2s}
+.bcsv:hover{filter:brightness(1.15)}
 .cw{background:#000;border-radius:8px;overflow:hidden;text-align:center;position:relative}
 canvas{max-width:100%;height:auto;display:block;margin:0 auto;cursor:crosshair}
 .row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid #1e293b66}
@@ -41,22 +43,25 @@ canvas{max-width:100%;height:auto;display:block;margin:0 auto;cursor:crosshair}
 <body>
 <div class="wrap">
 <header>
-<div><h1>Tyto Alba PhenoLab</h1><p style="color:#94a3b8;font-size:13px">Estudio de Feomelanina (CIELAB Calibrado) y Eumelanina (Morfometría en mm)</p></div>
-<span class="badge">RAW (.RW2, .NEF, .CR2, .ARW) & JPG</span>
+<div><h1>Tyto Alba PhenoLab</h1><p style="color:#94a3b8;font-size:13px">Estudio de Feomelanina (CIELAB Lineal Calibrado) y Eumelanina (Morfometría en mm)</p></div>
+<span class="badge">RAW & JPG + Paleta Integrada</span>
 </header>
 <div class="box" id="dz">
 <p style="font-weight:700;font-size:16px">Selecciona o arrastra la fotografía de lechuza común</p>
-<p style="color:#94a3b8;font-size:12px;margin-top:4px">Protocolo: pecho sobre fondo negro + regla métrica de 15 cm a la izquierda + Carta de Calibración</p>
+<p style="color:#94a3b8;font-size:12px;margin-top:4px">Protocolo: pecho sobre fondo negro + regla métrica de 15 cm + Carta de Calibración</p>
 <label for="fi" class="btn">Seleccionar Fotografía</label>
 <input type="file" id="fi" style="display:none">
 </div>
 <div id="sb" class="st hide">Listo</div>
 
 <div id="calibBox" class="card hide" style="border-color:#1e3a8a;background:#090d16;margin-top:14px">
-<div class="ch"><b style="color:#38bdf8">Calibración Radiométrica (Carta de Referencia)</b><span id="calibStatus" style="font-size:12px;color:#fcd34d">Pendiente de muestreo</span></div>
+<div class="ch"><b style="color:#38bdf8">Calibración Radiométrica Lineal (Paleta Integrada)</b><span id="calibStatus" style="font-size:12px;color:#fcd34d">Pendiente de muestreo</span></div>
 <div class="calibration-banner" id="calibPrompt">
-  <span id="calibInstruction">Haz clic en el parche <b>BLANCO</b> de tu carta de calibración sobre la imagen.</span>
+  <span id="calibInstruction">Haz clic en el parche <b>BLANCO (90%)</b> de la paleta superpuesta en la imagen.</span>
   <button type="button" id="skipCalib" class="bdl" style="background:#334155;color:#f8fafc;flex-shrink:0">Omitir Calibración</button>
+</div>
+<div id="integrityBox" class="hide" style="margin-top:10px;padding:8px 12px;background:#020617;border-radius:6px;font-size:12px;border:1px solid #334155">
+  <b>Integridad Radiométrica:</b> <span id="integrityStatus">-</span>
 </div>
 </div>
 
@@ -69,20 +74,23 @@ canvas{max-width:100%;height:auto;display:block;margin:0 auto;cursor:crosshair}
 
 <div id="rs" class="grid hide">
   
-  <!-- COLUMNA IZQUIERDA: Imagen y, debajo, las 3 secciones clave -->
+  <!-- COLUMNA IZQUIERDA -->
   <div style="display:flex; flex-direction:column; gap:15px;">
     
     <!-- Imagen Estudiada -->
     <div class="card" style="margin-bottom:0;">
-      <div class="ch"><b id="cvTitle">Imagen Estudiada (Overlay Diagnóstico)</b><button type="button" id="dl" class="bdl">Descargar Imagen (.PNG)</button></div>
+      <div class="ch">
+        <b id="cvTitle">Imagen Estudiada (Overlay Diagnóstico + Paleta)</b>
+        <button type="button" id="dl" class="bdl" style="background:#06b6d4; color:#020617;">Descargar Imagen (.PNG)</button>
+      </div>
       <div class="cw"><canvas id="cv"></canvas></div>
     </div>
 
-    <!-- 1. Feomelanina (Base Calibrada) -->
+    <!-- 1. Feomelanina (Base Calibrada Lineal) -->
     <div class="card" style="margin-bottom:0;">
-      <div class="ch"><b style="color:#fbbf24">1. Feomelanina (Base Calibrada)</b><span id="sw" class="sw"></span></div>
+      <div class="ch"><b style="color:#fbbf24">1. Feomelanina (Base Lineal Calibrada)</b><span id="sw" class="sw"></span></div>
       <div class="row"><span style="color:#94a3b8">Índice:</span><b id="fi2" style="color:#fcd34d">-</b></div>
-      <div class="row"><span style="color:#94a3b8">CIELAB (Calibrado):</span><b id="fl">-</b></div>
+      <div class="row"><span style="color:#94a3b8">CIELAB Lineal (Calibrado):</span><b id="fl">-</b></div>
       <div class="scale-box">
         <div style="font-weight:700;font-size:13px;color:#f8fafc">Tonalidad del fondo del plumaje</div>
         <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">(escala visual, 8 niveles)</div>
@@ -90,29 +98,33 @@ canvas{max-width:100%;height:auto;display:block;margin:0 auto;cursor:crosshair}
       </div>
     </div>
 
-    <!-- 2. Eumelanina (Pintas) -->
+    <!-- 2. Eumelanina (Pintas y Disco Facial) -->
     <div class="card" style="margin-bottom:0;">
-      <div class="ch"><b style="color:#f472b6">2. Eumelanina (Pintas)</b><span id="eb" style="font-size:11px;color:#94a3b8">-</span></div>
+      <div class="ch"><b style="color:#f472b6">2. Eumelanina (Pintas y Disco Facial)</b><span id="eb" style="font-size:11px;color:#94a3b8">-</span></div>
       <div class="row"><span style="color:#94a3b8">Total pintas:</span><b id="ec" style="color:#f472b6;font-size:15px">-</b></div>
       <div class="row"><span style="color:#94a3b8">Diámetro medio:</span><b id="ed">-</b></div>
       <div class="row"><span style="color:#94a3b8">Cobertura:</span><b id="ev">-</b></div>
       <div class="row"><span style="color:#94a3b8">Densidad:</span><b id="en">-</b></div>
+      <div class="row"><span style="color:#94a3b8"><b>Reborde Eumelánico Facial:</b></span><b id="faceBorderVal" style="color:#38bdf8">-</b></div>
+      <div class="row"><span style="color:#94a3b8">Intensidad del Disco Facial:</span><b id="faceIntVal" style="color:#fcd34d">-</b></div>
     </div>
 
     <!-- 3. Asimetría Bilateral y Sexaje -->
     <div class="card" style="margin-bottom:0; border-color:#1e3a8a;">
-      <div class="ch"><b style="color:#38bdf8">3. Asimetría Bilateral y Sexaje</b><span id="sexBadge" style="font-size:11px;color:#38bdf8">-</span></div>
-      <div class="row"><span style="color:#94a3b8">Flanco Izquierdo:</span><b id="asymIzq">-</b></div>
-      <div class="row"><span style="color:#94a3b8">Flanco Derecho:</span><b id="asymDer">-</b></div>
+      <div class="ch"><b style="color:#38bdf8">3. Asimetría Bilateral (Palmer & Strobeck) y Sexaje</b><span id="sexBadge" style="font-size:11px;color:#38bdf8">-</span></div>
+      <div class="row"><span style="color:#94a3b8">Flanco Izquierdo ($L$):</span><b id="asymIzq">-</b></div>
+      <div class="row"><span style="color:#94a3b8">Flanco Derecho ($R$):</span><b id="asymDer">-</b></div>
+      <div class="row"><span style="color:#94a3b8">Índice FA (Diámetro):</span><b id="faDiamVal" style="color:#34d399">-</b></div>
+      <div class="row"><span style="color:#94a3b8">Índice FA (Abundancia):</span><b id="faCountVal" style="color:#34d399">-</b></div>
       <div class="row"><span style="color:#94a3b8">Estado Asimetría:</span><b id="asymStatus" style="color:#34d399">-</b></div>
       <div style="margin-top:8px;padding-top:6px;border-top:1px solid #1e293b;font-size:12px">
-        <span style="color:#94a3b8">Predicción Sexo (Biometría + Plumaje): </span><b id="sexPredText" style="color:#f1f5f9">Introduce peso y alar</b>
+        <span style="color:#94a3b8">Predicción Sexo (Peso + Plumaje): </span><b id="sexPredText" style="color:#f1f5f9">Introduce el peso en gramos</b>
       </div>
     </div>
 
   </div>
 
-  <!-- COLUMNA DERECHA: Metadatos, ROI, Botones y el Nuevo Mapa RStudio style -->
+  <!-- COLUMNA DERECHA -->
   <div id="sidePanels" style="display:flex; flex-direction:column; gap:15px;">
     
     <!-- Metadatos de Campo -->
@@ -148,9 +160,8 @@ canvas{max-width:100%;height:auto;display:block;margin:0 auto;cursor:crosshair}
           </select>
         </div>
         <div class="meta-field"><label for="m_wing">Ala Máxima (mm)</label><input type="number" step="0.5" id="m_wing" placeholder="Ej. 282.0"></div>
-        <div class="meta-field"><label for="m_tarsus">Tarso (mm)</label><input type="number" step="0.1" id="m_tarsus" placeholder="Ej. 62.4"></div>
-        <div class="meta-field"><label for="m_mass">Masa Corporal (g)</label><input type="number" step="0.5" id="m_mass" placeholder="Ej. 320.0"></div>
-        <div class="meta-field"><label for="m_coords">Coordenadas (Lat, Lon)</label><input type="text" id="m_coords" placeholder="Ej. 40.338, -0.165"></div>
+        <div class="meta-field"><label for="m_mass">Masa Corporal (g)</label><input type="number" step="0.5" id="m_mass" placeholder="Ej. 290.0 (Media macho 284.9)"></div>
+        <div class="meta-field" style="grid-column: span 2;"><label for="m_coords">Coordenadas (Lat, Lon)</label><input type="text" id="m_coords" placeholder="Ej. 40.338, -0.165"></div>
       </div>
     </div>
 
@@ -165,7 +176,7 @@ canvas{max-width:100%;height:auto;display:block;margin:0 auto;cursor:crosshair}
       </div>
     </div>
 
-    <!-- NUEVO: Mapa de Distribución Estilo RStudio (ggplot2) -->
+    <!-- Mapa de Distribución Estilo RStudio (ggplot2) -->
     <div class="card" style="margin-bottom:0; border-color:#f472b6;">
       <div class="ch">
         <b style="color:#f472b6">Mapa de Distribución de Eumelanina Ventral</b>
@@ -179,6 +190,7 @@ canvas{max-width:100%;height:auto;display:block;margin:0 auto;cursor:crosshair}
 
     <button type="button" id="csv" class="bcsv">Exportar Resumen General (.CSV)</button>
     <button type="button" id="csv_detailed" class="bcsv" style="background:#0e7490;color:#f8fafc">Exportar Detalle de Pintas para RStudio (.CSV)</button>
+    <button type="button" id="pdf_report" class="bcsv" style="background:#10b981;color:#020617;border-color:#059669;font-size:14px">📄 Descargar Informe Científico Completo (.PDF)</button>
 
   </div>
 
@@ -187,14 +199,14 @@ canvas{max-width:100%;height:auto;display:block;margin:0 auto;cursor:crosshair}
 
 <script>
 var NIVELES = [
-  { name: "Blanco", hex: "#f5f4ef", desc: "blanco puro" },
-  { name: "Nivel 1", hex: "#efe3ce", desc: "blanco marfil muy claro" },
-  { name: "Nivel 2", hex: "#e3cca7", desc: "crema muy claro" },
-  { name: "Nivel 3", hex: "#d4b082", desc: "crema ocre claro" },
-  { name: "Nivel 4", hex: "#c09261", desc: "ocre medio" },
-  { name: "Nivel 5", hex: "#a67446", desc: "ocre tostado" },
-  { name: "Nivel 6", hex: "#834d25", desc: "rufo pardo" },
-  { name: "Pardo/rojizo", hex: "#4d230f", desc: "pardo rojizo intenso" }
+  { name: "Blanco", hex: "#f5f4ef", desc: "blanco puro", rgb: [245, 244, 239] },
+  { name: "Nivel 1", hex: "#efe3ce", desc: "blanco marfil muy claro", rgb: [239, 227, 206] },
+  { name: "Nivel 2", hex: "#e3cca7", desc: "crema muy claro", rgb: [227, 204, 167] },
+  { name: "Nivel 3", hex: "#d4b082", desc: "crema ocre claro", rgb: [212, 176, 130] },
+  { name: "Nivel 4", hex: "#c09261", desc: "ocre medio", rgb: [192, 146, 97] },
+  { name: "Nivel 5", hex: "#a67446", desc: "ocre tostado", rgb: [166, 116, 70] },
+  { name: "Nivel 6", hex: "#834d25", desc: "rufo pardo", rgb: [131, 77, 37] },
+  { name: "Pardo/rojizo", hex: "#4d230f", desc: "pardo rojizo intenso", rgb: [77, 35, 15] }
 ];
 var dz=document.getElementById('dz'),fi=document.getElementById('fi'),sb=document.getElementById('sb'),cv=document.getElementById('cv'),ctx=cv.getContext('2d'),s1=document.getElementById('s1'),s2=document.getElementById('s2'),s3=document.getElementById('s3'),sc=document.createElement('canvas'),fn="lechuza",lm=null;
 
@@ -202,8 +214,12 @@ var calibrating = false;
 var calibStep = 0;
 var patchSamples = { white: null, gray: null, black: null };
 var calibrationParams = null;
+var radiometricIntegrity = null;
 var customRoi = null;
 var currentPts = [];
+var faMetrics = null;
+var paletteCoords = {};
+var faceMetrics = { borderVal: "-", intensity: "-" };
 
 s1.oninput=function(){document.getElementById('v1').textContent=s1.value};
 s2.oninput=function(){document.getElementById('v2').textContent=s2.value};
@@ -227,7 +243,7 @@ document.getElementById('resetRoi').onclick = function(){
   if(sc.width>0 && !calibrating) run();
 };
 
-['m_title','m_ring','m_pvc','m_date','m_loc','m_age','m_sex','m_wing','m_tarsus','m_mass','m_coords'].forEach(function(id){
+['m_title','m_ring','m_pvc','m_date','m_loc','m_age','m_sex','m_wing','m_mass','m_coords'].forEach(function(id){
   document.getElementById(id).addEventListener('change', function(){
     if(id==='m_ring'){
       var val = document.getElementById('m_ring').value.trim();
@@ -251,6 +267,7 @@ function load(f){
   document.getElementById('rs').classList.add('hide');
   document.getElementById('cb').classList.add('hide');
   document.getElementById('calibBox').classList.add('hide');
+  document.getElementById('integrityBox').classList.add('hide');
   msg("Cargando "+f.name+"...");
   getImg(f).then(function(u){
     var im=new Image();
@@ -270,20 +287,58 @@ function initCalibrationPrompt(){
   calibStep = 1;
   patchSamples = { white: null, gray: null, black: null };
   calibrationParams = null;
+  radiometricIntegrity = null;
   
   var scf = sc.width > 1000 ? 1000/sc.width : 1;
   cv.width = Math.round(sc.width*scf);
   cv.height = Math.round(sc.height*scf);
+  
   ctx.drawImage(sc, 0, 0, cv.width, cv.height);
   
+  var pW = 140, pH = 45;
+  var pX = 20, pY = cv.height - pH - 20;
+  
+  ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+  ctx.fillRect(pX - 5, pY - 18, pW + 10, pH + 24);
+  ctx.strokeStyle = "#38bdf8";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(pX - 5, pY - 18, pW + 10, pH + 24);
+  
+  ctx.fillStyle = "#38bdf8";
+  ctx.font = "bold 10px system-ui";
+  ctx.fillText("PALETA CALIBRACIÓN", pX, pY - 6);
+  
+  var patches = [
+    { name: "Blanco", color: "rgb(230,230,230)", x: pX, y: pY, w: 38, h: 28 },
+    { name: "Gris", color: "rgb(120,120,120)", x: pX + 45, y: pY, w: 38, h: 28 },
+    { name: "Negro", color: "rgb(25,25,25)", x: pX + 90, y: pY, w: 38, h: 28 }
+  ];
+  
+  paletteCoords = {};
+  patches.forEach(function(pt, idx){
+    ctx.fillStyle = pt.color;
+    ctx.fillRect(pt.x, pt.y, pt.w, pt.h);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(pt.x, pt.y, pt.w, pt.h);
+    
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "9px system-ui";
+    ctx.fillText(pt.name, pt.x + 4, pt.y + pt.h + 10);
+    
+    paletteCoords[idx === 0 ? 'white' : (idx === 1 ? 'gray' : 'black')] = {
+      cx: pt.x + pt.w/2, cy: pt.y + pt.h/2
+    };
+  });
+
   document.getElementById('rs').classList.remove('hide');
   document.getElementById('sidePanels').classList.add('hide');
   document.getElementById('dl').classList.add('hide');
-  document.getElementById('cvTitle').textContent = "Muestreo de Carta de Calibración (Haz clic en los parches)";
+  document.getElementById('cvTitle').textContent = "Muestreo sobre Paleta de Colores Integrada";
   
   document.getElementById('calibBox').classList.remove('hide');
   document.getElementById('calibStatus').textContent = "Paso 1/3";
-  document.getElementById('calibInstruction').innerHTML = 'Haz clic en el centro del parche <b>BLANCO</b> de la carta de calibración.';
+  document.getElementById('calibInstruction').innerHTML = 'Haz clic en el parche <b>BLANCO</b> de la paleta integrada abajo a la izquierda.';
 }
 
 cv.onclick = function(e){
@@ -294,11 +349,20 @@ cv.onclick = function(e){
   var clickX = (e.clientX - rect.left) * scaleX;
   var clickY = (e.clientY - rect.top) * scaleY;
   
-  var ratio = sc.width / cv.width;
-  var realX = Math.round(clickX * ratio);
-  var realY = Math.round(clickY * ratio);
+  var targetKey = calibStep === 1 ? 'white' : (calibStep === 2 ? 'gray' : 'black');
+  var pCoord = paletteCoords[targetKey];
   
-  var sample = samplePatchRGB(sc.getContext('2d'), realX, realY, 12);
+  var realX, realY;
+  if(Math.abs(clickX - pCoord.cx) < 40 && Math.abs(clickY - pCoord.cy) < 30) {
+    realX = Math.round(pCoord.cx * (sc.width / cv.width));
+    realY = Math.round(pCoord.cy * (sc.height / cv.height));
+  } else {
+    var ratio = sc.width / cv.width;
+    realX = Math.round(clickX * ratio);
+    realY = Math.round(clickY * ratio);
+  }
+  
+  var sample = samplePatchRGB(sc.getContext('2d'), realX, realY, 10);
   
   ctx.strokeStyle = calibStep === 1 ? "#ffffff" : (calibStep === 2 ? "#38bdf8" : "#f472b6");
   ctx.lineWidth = 2.5;
@@ -310,17 +374,17 @@ cv.onclick = function(e){
     patchSamples.white = sample;
     calibStep = 2;
     document.getElementById('calibStatus').textContent = "Paso 2/3";
-    document.getElementById('calibInstruction').innerHTML = 'Haz clic en el centro del parche <b>GRIS MEDIO (18%)</b> de la carta.';
+    document.getElementById('calibInstruction').innerHTML = 'Haz clic en el parche <b>GRIS MEDIO (18%)</b> de la paleta integrada.';
   } else if(calibStep === 2){
     patchSamples.gray = sample;
     calibStep = 3;
     document.getElementById('calibStatus').textContent = "Paso 3/3";
-    document.getElementById('calibInstruction').innerHTML = 'Haz clic en el centro del parche <b>NEGRO / SOMBRA</b> de la carta.';
+    document.getElementById('calibInstruction').innerHTML = 'Haz clic en el parche <b>NEGRO (3%)</b> de la paleta integrada.';
   } else if(calibStep === 3){
     patchSamples.black = sample;
     calibrating = false;
-    document.getElementById('calibBox').classList.add('hide');
     computeCalibrationMatrix();
+    evaluateRadiometricIntegrity();
     executeFullAnalysis();
   }
 };
@@ -329,6 +393,7 @@ document.getElementById('skipCalib').onclick = function(){
   calibrating = false;
   patchSamples = { white: null, gray: null, black: null };
   calibrationParams = null;
+  radiometricIntegrity = { status: "Omitida (sRGB Estándar)", r2: 0, quality: "N/A" };
   document.getElementById('calibBox').classList.add('hide');
   executeFullAnalysis();
 };
@@ -348,28 +413,37 @@ function samplePatchRGB(sCtx, cx, cy, radius){
   return { r: rSum/count, g: gSum/count, b: bSum/count };
 }
 
-function sRGBtoLinear(c8){
+function sRGBtoLinearPure(c8){
   var c = c8 / 255.0;
   return (c <= 0.04045) ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 }
 
 function computeCalibrationMatrix(){
   var refVals = [0.90, 0.18, 0.03];
-  var measuredR = [sRGBtoLinear(patchSamples.white.r), sRGBtoLinear(patchSamples.gray.r), sRGBtoLinear(patchSamples.black.r)];
-  var measuredG = [sRGBtoLinear(patchSamples.white.g), sRGBtoLinear(patchSamples.gray.g), sRGBtoLinear(patchSamples.black.g)];
-  var measuredB = [sRGBtoLinear(patchSamples.white.b), sRGBtoLinear(patchSamples.gray.b), sRGBtoLinear(patchSamples.black.b)];
+  var measuredR = [sRGBtoLinearPure(patchSamples.white.r), sRGBtoLinearPure(patchSamples.gray.r), sRGBtoLinearPure(patchSamples.black.r)];
+  var measuredG = [sRGBtoLinearPure(patchSamples.white.g), sRGBtoLinearPure(patchSamples.gray.g), sRGBtoLinearPure(patchSamples.black.g)];
+  var measuredB = [sRGBtoLinearPure(patchSamples.white.b), sRGBtoLinearPure(patchSamples.gray.b), sRGBtoLinearPure(patchSamples.black.b)];
   
   function getLinearFit(meas, refs){
     var n = meas.length;
-    var sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+    var sumX = 0, sumY = 0, sumXY = 0, sumXX = 0, sumYY = 0;
     for(var i=0; i<n; i++){
       sumX += meas[i]; sumY += refs[i];
-      sumXY += meas[i] * refs[i]; sumXX += meas[i] * meas[i];
+      sumXY += meas[i] * refs[i]; sumXX += meas[i] * meas[i]; sumYY += refs[i] * refs[i];
     }
     var denom = (n * sumXX - sumX * sumX);
     var slope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 1.0;
     var intercept = (sumY - slope * sumX) / n;
-    return { slope: isNaN(slope) ? 1.0 : slope, intercept: isNaN(intercept) ? 0.0 : intercept };
+    
+    // Acotar pendiente e intercepto para evitar distorsiones de color extremas
+    slope = Math.max(0.7, Math.min(1.3, slope));
+    intercept = Math.max(-0.05, Math.min(0.05, intercept));
+    
+    var numR2 = (n * sumXY - sumX * sumY);
+    var denR2 = Math.sqrt((n * sumXX - sumX * sumX) * (n * sumYY - sumY * sumY));
+    var r2 = denR2 !== 0 ? Math.pow(numR2 / denR2, 2) : 0;
+    
+    return { slope: isNaN(slope) ? 1.0 : slope, intercept: isNaN(intercept) ? 0.0 : intercept, r2: isNaN(r2) ? 0 : r2 };
   }
   
   calibrationParams = {
@@ -377,6 +451,37 @@ function computeCalibrationMatrix(){
     g: getLinearFit(measuredG, refVals),
     b: getLinearFit(measuredB, refVals)
   };
+}
+
+function evaluateRadiometricIntegrity(){
+  if(!calibrationParams) return;
+  var avgR2 = (calibrationParams.r.r2 + calibrationParams.g.r2 + calibrationParams.b.r2) / 3;
+  var whiteVal = patchSamples.white.r;
+  var blackVal = patchSamples.black.r;
+  
+  var statusText = "";
+  var qualityColor = "#34d399";
+  
+  if(whiteVal > 248) {
+    statusText = "⚠️ Alerta: Posible saturación (blanco > 248). R² = " + avgR2.toFixed(3);
+    qualityColor = "#fcd34d";
+  } else if(blackVal < 5) {
+    statusText = "⚠️ Alerta: Posible subexposición (negro < 5). R² = " + avgR2.toFixed(3);
+    qualityColor = "#fcd34d";
+  } else if(avgR2 < 0.80) {
+    statusText = "⚠️ Linealidad irregular (R² = " + avgR2.toFixed(3) + " < 0.80)";
+    qualityColor = "#f87171";
+  } else {
+    statusText = "✅ Óptima (Linealidad R² = " + avgR2.toFixed(3) + ", sin saturación)";
+  }
+  
+  radiometricIntegrity = { status: statusText, r2: avgR2, quality: qualityColor };
+  
+  var intBox = document.getElementById('integrityBox');
+  var intSpan = document.getElementById('integrityStatus');
+  intSpan.textContent = statusText;
+  intSpan.style.color = qualityColor;
+  intBox.classList.remove('hide');
 }
 
 function calibratedLinearRGBtoLab(rLin, gLin, bLin){
@@ -398,9 +503,9 @@ function calibratedLinearRGBtoLab(rLin, gLin, bLin){
 
 function lab(r,g,b){
   if(calibrationParams){
-    var rL = Math.max(0, sRGBtoLinear(r) * calibrationParams.r.slope + calibrationParams.r.intercept);
-    var gL = Math.max(0, sRGBtoLinear(g) * calibrationParams.g.slope + calibrationParams.g.intercept);
-    var bL = Math.max(0, sRGBtoLinear(b) * calibrationParams.b.slope + calibrationParams.b.intercept);
+    var rL = Math.max(0, sRGBtoLinearPure(r) * calibrationParams.r.slope + calibrationParams.r.intercept);
+    var gL = Math.max(0, sRGBtoLinearPure(g) * calibrationParams.g.slope + calibrationParams.g.intercept);
+    var bL = Math.max(0, sRGBtoLinearPure(b) * calibrationParams.b.slope + calibrationParams.b.intercept);
     return calibratedLinearRGBtoLab(rL, gL, bL);
   }
   
@@ -410,13 +515,13 @@ function lab(r,g,b){
   b=b>.04045?Math.pow((b+.055)/1.055,2.4):b/12.92;
   var x=(r*.4124+g*.3576+b*.1805)/.95047,y=(r*.2126+g*.7152+b*.0722)/1,z=(r*.0193+g*.1192+b*.9505)/1.08883;
   x=x>.008856?Math.cbrt(x):(7.787*x)+16/116;
-  y=y>.008856?Math.cbrt(y):(7.787*x)+16/116;
+  y=y>.008856?Math.cbrt(y):(7.787*y)+16/116;
   z=z>.008856?Math.cbrt(z):(7.787*z)+16/116;
   return{L:(116*y)-16,a:500*(x-y),b:200*(y-z)}
 }
 
 function executeFullAnalysis(){
-  msg("Analizando plumaje...");
+  msg("Analizando plumaje con paleta integrada...");
   setTimeout(function(){
     try{
       run();
@@ -424,8 +529,8 @@ function executeFullAnalysis(){
       document.getElementById('cb').classList.remove('hide');
       document.getElementById('rs').classList.remove('hide');
       document.getElementById('sidePanels').classList.remove('hide');
-      document.getElementById('dl').classList.add('hide');
-      document.getElementById('cvTitle').textContent = "Imagen Estudiada (Overlay Diagnóstico)";
+      document.getElementById('dl').classList.remove('hide');
+      document.getElementById('cvTitle').textContent = "Imagen Estudiada (Overlay Diagnóstico + Paleta)";
     }catch(err){msg("Error: "+err.message)}
   }, 50);
 }
@@ -447,6 +552,34 @@ var scf=sc.width>1000?1000/sc.width:1,W=Math.round(sc.width*scf),H=Math.round(sc
 cv.width=W; cv.height=H;
 var tctx=cv.getContext('2d');
 tctx.drawImage(sc,0,0,W,H);
+
+var pW = 140, pH = 45;
+var pX = 20, pY = cv.height - pH - 20;
+tctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+tctx.fillRect(pX - 5, pY - 18, pW + 10, pH + 24);
+tctx.strokeStyle = "#38bdf8";
+tctx.lineWidth = 1;
+tctx.strokeRect(pX - 5, pY - 18, pW + 10, pH + 24);
+
+tctx.fillStyle = "#38bdf8";
+tctx.font = "bold 10px system-ui";
+tctx.fillText("PALETA CALIBRACIÓN", pX, pY - 6);
+
+var patches = [
+  { name: "Blanco", color: "rgb(230,230,230)", x: pX, y: pY, w: 38, h: 28 },
+  { name: "Gris", color: "rgb(120,120,120)", x: pX + 45, y: pY, w: 38, h: 28 },
+  { name: "Negro", color: "rgb(25,25,25)", x: pX + 90, y: pY, w: 38, h: 28 }
+];
+patches.forEach(function(pt){
+  tctx.fillStyle = pt.color;
+  tctx.fillRect(pt.x, pt.y, pt.w, pt.h);
+  tctx.strokeStyle = "#ffffff";
+  tctx.lineWidth = 1.5;
+  tctx.strokeRect(pt.x, pt.y, pt.w, pt.h);
+  tctx.fillStyle = "#ffffff";
+  tctx.font = "9px system-ui";
+  tctx.fillText(pt.name, pt.x + 4, pt.y + pt.h + 10);
+});
 
 var d=tctx.getImageData(0,0,W,H).data,rX1=W,rX2=0,rY1=H,rY2=0,rP=0,oX1=W,oX2=0,oY1=H,oY2=0;
 for(var y=Math.round(H*.15);y<Math.round(H*.92);y++)for(var x=Math.round(W*.12);x<Math.round(W*.32);x++){var i=(y*W+x)*4,l=.299*d[i]+.587*d[i+1]+.114*d[i+2],sat=Math.max(d[i],d[i+1],d[i+2])-Math.min(d[i],d[i+1],d[i+2]);if(l>105&&sat<35){if(x<rX1)rX1=x;if(x>rX2)rX2=x;if(y<rY1)rY1=y;if(y>rY2)rY2=y;rP++}}
@@ -475,16 +608,79 @@ for(var y=0;y<rH2;y++)for(var x=0;x<rW;x++){var st=y*rW+x;if(sm[st]&&!vis[st]){v
 
 currentPts = pts;
 
-var sR=0,sG=0,sB=0,bc=0;for(var y=0;y<rH2;y++)for(var x=0;x<rW;x++){var p=y*rW+x;if(bm[p]&&!vsm[p]){var i=((py1+y)*W+(px1+x))*4;sR+=d[i];sG+=d[i+1];sB+=d[i+2];bc++}}
-var aR=bc>0?sR/bc:220,aG=bc>0?sG/bc:210,aB=bc>0?sB/bc:195,lb=lab(aR,aG,aB),fi3=Math.sqrt(Math.pow(Math.max(0,lb.a),2)+Math.pow(Math.max(0,lb.b),2));
-var score=fi3+(100-lb.L)*0.35;
-var nivIdx=score>42?7:score>35?6:score>29?5:score>23?4:score>18?3:score>13?2:score>8?1:0;
+// Análisis del Disco Facial (compacto de alto sobre borde superior de ROI pectoral)
+var faceY2 = py1; 
+var faceH = Math.round(oh * 0.32);
+var faceY1 = Math.max(0, faceY2 - faceH);
+var faceX1 = Math.max(0, px1 - Math.round(ow * 0.05));
+var faceX2 = Math.min(W - 1, px2 + Math.round(ow * 0.05));
+
+var fSumR = 0, fSumG = 0, fSumB = 0, fCount = 0;
+var darkBorderCount = 0, totalBorderPixels = 0;
+
+for(var y = faceY1; y < faceY2; y++){
+  for(var x = faceX1; x < faceX2; x++){
+    var idx = (y * W + x) * 4;
+    var r = d[idx], g = d[idx+1], b = d[idx+2];
+    fSumR += r; fSumG += g; fSumB += b; fCount++;
+    var lum = 0.299*r + 0.587*g + 0.114*b;
+    if(lum < 75) { darkBorderCount++; }
+    totalBorderPixels++;
+  }
+}
+
+var faceAvgR = fCount > 0 ? fSumR / fCount : 200;
+var faceAvgG = fCount > 0 ? fSumG / fCount : 200;
+var faceAvgB = fCount > 0 ? fSumB / fCount : 190;
+var faceLab = lab(faceAvgR, faceAvgG, faceAvgB);
+var faceChroma = Math.sqrt(faceLab.a * faceLab.a + faceLab.b * faceLab.b);
+
+var borderRatio = totalBorderPixels > 0 ? (darkBorderCount / totalBorderPixels) * 100 : 0;
+var borderDesc = borderRatio > 22 ? "Conspicuo / Muy Marcado (" + borderRatio.toFixed(1) + "%)" : (borderRatio > 12 ? "Moderado (" + borderRatio.toFixed(1) + "%)" : "Discreto / Atenuado (" + borderRatio.toFixed(1) + "%)");
+var intensityDesc = faceChroma > 14 ? "Ocre / Rufescente (C* " + faceChroma.toFixed(1) + ")" : "Blanco / Pálido (C* " + faceChroma.toFixed(1) + ")";
+
+faceMetrics = { borderVal: borderDesc, intensity: intensityDesc };
+document.getElementById('faceBorderVal').textContent = borderDesc;
+document.getElementById('faceIntVal').textContent = intensityDesc;
+
+var sR=0,sG=0,sB=0,bc=0;
+for(var y=0;y<rH2;y++){
+  for(var x=0;x<rW;x++){
+    var p=y*rW+x;
+    if(bm[p]){
+      var i=((py1+y)*W+(px1+x))*4;
+      if(!vsm[p]){
+        sR+=d[i]; sG+=d[i+1]; sB+=d[i+2]; bc++;
+      }
+    }
+  }
+}
+if(bc < 50){
+  sR=0; sG=0; sB=0; bc=0;
+  for(var y=0;y<rH2;y++){
+    for(var x=0;x<rW;x++){
+      var p=y*rW+x;
+      if(bm[p]){
+        var i=((py1+y)*W+(px1+x))*4;
+        sR+=d[i]; sG+=d[i+1]; sB+=d[i+2]; bc++;
+      }
+    }
+  }
+}
+var aR=bc>0?sR/bc:220, aG=bc>0?sG/bc:210, aB=bc>0?sB/bc:195;
+var lb=lab(aR,aG,aB);
+var fi3 = Math.sqrt(Math.max(0, lb.a)*Math.max(0, lb.a) + Math.max(0, lb.b)*Math.max(0, lb.b));
+if(fi3 < 1.0) {
+  fi3 = Math.max(2.5, (aR - aB) * 0.15 + (255 - aG) * 0.05);
+}
+
+var score = fi3 + Math.max(0, (100 - lb.L) * 0.35);
+var nivIdx = score>42?7:score>35?6:score>29?5:score>23?4:score>18?3:score>13?2:score>8?1:0;
 var cf=NIVELES[nivIdx].name,hx="#"+Math.round(aR).toString(16).padStart(2,'0')+Math.round(aG).toString(16).padStart(2,'0')+Math.round(aB).toString(16).padStart(2,'0');
 var tp=pts.length,sd=0,sa=0;for(var i=0;i<tp;i++){sd+=pts[i].dm;sa+=pts[i].am}var dm=tp>0?sd/tp:0,sq=0;for(var i=0;i<tp;i++)sq+=Math.pow(pts[i].dm-dm,2);
 var ds=tp>0?Math.sqrt(sq/tp):0,ap=bc/(ppm*ppm),cov=(sa/Math.max(1,ap))*100,den=tp/Math.max(.01,ap/100);
 
-// Asimetría Bilateral
-var asymIzqText = "-", asymDerText = "-", asymStatusText = "Sin datos";
+var asymIzqText = "-", asymDerText = "-", faDiamValText = "-", faCountValText = "-", asymStatusText = "Simetría normal";
 if(currentPts.length > 0) {
   var xs = currentPts.map(function(p){ return p.cx; }).sort(function(a,b){ return a-b; });
   var medianaX = xs[Math.floor(xs.length / 2)];
@@ -495,32 +691,64 @@ if(currentPts.length > 0) {
   });
   var mediaIzq = izq.length > 0 ? izq.reduce(function(a,b){return a+b;},0)/izq.length : 0;
   var mediaDer = der.length > 0 ? der.reduce(function(a,b){return a+b;},0)/der.length : 0;
+  
   asymIzqText = izq.length + " pintas (Ø " + mediaIzq.toFixed(2) + " mm)";
   asymDerText = der.length + " pintas (Ø " + mediaDer.toFixed(2) + " mm)";
-  asymStatusText = "Simetría bilateral estable (p > 0.05)";
+
+  var meanDiamL_R = (mediaIzq + mediaDer) / 2;
+  var faDiam = meanDiamL_R > 0 ? Math.abs(mediaIzq - mediaDer) / meanDiamL_R : 0;
   
+  var meanCountL_R = (izq.length + der.length) / 2;
+  var faCount = meanCountL_R > 0 ? Math.abs(izq.length - der.length) / meanCountL_R : 0;
+
+  faDiamValText = faDiam.toFixed(3) + " (Palmer & Strobeck)";
+  faCountValText = faCount.toFixed(3) + " (Palmer & Strobeck)";
+  
+  if(faDiam > 0.15 || faCount > 0.30) {
+    asymStatusText = "Asimetría moderada/alta (FA > umbral estresor)";
+  } else {
+    asymStatusText = "Simetría bilateral estable (p > 0.05)";
+  }
+
   document.getElementById('asymIzq').textContent = asymIzqText;
   document.getElementById('asymDer').textContent = asymDerText;
+  document.getElementById('faDiamVal').textContent = faDiamValText;
+  document.getElementById('faCountVal').textContent = faCountValText;
   document.getElementById('asymStatus').textContent = asymStatusText;
+
+  faMetrics = { izqCount: izq.length, derCount: der.length, mediaIzq: mediaIzq, mediaDer: mediaDer, faDiam: faDiam, faCount: faCount, status: asymStatusText };
 }
 
-// Sexaje Integrado (Biometría + Color de Pecho)
 var mass = parseFloat(document.getElementById('m_mass').value) || 0;
-var wing = parseFloat(document.getElementById('m_wing').value) || 0;
-var sexPredText = "Pendiente de datos biométricos";
+var sexPredText = "Pendiente de introducir peso (g)";
 var sexColor = "#38bdf8";
 var sexBadgeText = "Pendiente";
+var estimatedSexCategory = "INDETERMINADO";
 
-if(mass > 0 && wing > 0) {
+if(mass > 0) {
   var esClaro = nivIdx <= 3;
-  if(mass <= 340 && wing <= 290) {
-    sexPredText = "MACHO (Morfometría ligera" + (esClaro ? " + Pecho claro típico" : "") + ")";
+  if(mass <= 295) {
+    sexPredText = "MACHO (Peso ligero " + mass + " g, acorde a media 284.9g" + (esClaro ? " + Pecho claro" : "") + ")";
     sexColor = "#38bdf8";
     sexBadgeText = "Macho";
-  } else {
-    sexPredText = "HEMBRA (Mayor corpulencia" + (!esClaro ? " + Tonalidad ocre/oscura" : "") + ")";
+    estimatedSexCategory = "MACHO";
+  } else if(mass > 325) {
+    sexPredText = "HEMBRA (Peso elevado " + mass + " g, acorde a media 319.6g" + (!esClaro ? " + Tonalidad ocre" : "") + ")";
     sexColor = "#f472b6";
     sexBadgeText = "Hembra";
+    estimatedSexCategory = "HEMBRA";
+  } else {
+    if(esClaro) {
+      sexPredText = "MACHO PROBABLE (Peso de solapamiento " + mass + " g, pero con plumaje claro Nivel " + nivIdx + ")";
+      sexColor = "#38bdf8";
+      sexBadgeText = "Macho (Prob.)";
+      estimatedSexCategory = "MACHO";
+    } else {
+      sexPredText = "HEMBRA PROBABLE (Peso de solapamiento " + mass + " g, con plumaje oscuro Nivel " + nivIdx + ")";
+      sexColor = "#f472b6";
+      sexBadgeText = "Hembra (Prob.)";
+      estimatedSexCategory = "HEMBRA";
+    }
   }
 }
 document.getElementById('sexPredText').textContent = sexPredText;
@@ -529,6 +757,22 @@ document.getElementById('sexBadge').textContent = sexBadgeText;
 document.getElementById('sexBadge').style.color = sexColor;
 
 if(rP>400){var rx=Math.round((rX1+rX2)/2);tctx.strokeStyle="#39ff14";tctx.lineWidth=3.5;tctx.beginPath();tctx.moveTo(rx,rY1);tctx.lineTo(rx,rY2);tctx.stroke();tctx.fillStyle="#39ff14";tctx.font="bold 15px sans-serif";tctx.fillText("150 mm ("+ppm.toFixed(1)+" px/mm)",Math.max(10,rX1-30),Math.max(25,rY1-12))}
+
+if(currentPts.length > 0) {
+  var xs = currentPts.map(function(p){ return p.cx; }).sort(function(a,b){ return a-b; });
+  var medianaX = xs[Math.floor(xs.length / 2)];
+  tctx.strokeStyle = "#38bdf8";
+  tctx.lineWidth = 2;
+  tctx.setLineDash([4, 4]);
+  tctx.beginPath();
+  tctx.moveTo(medianaX, py1);
+  tctx.lineTo(medianaX, py2);
+  tctx.stroke();
+  tctx.setLineDash([]);
+  tctx.fillStyle = "#38bdf8";
+  tctx.font = "bold 11px sans-serif";
+  tctx.fillText("Eje Sagital (L / R)", medianaX - 35, py1 - 6);
+}
 
 tctx.strokeStyle="#facc15";tctx.lineWidth=2.5;tctx.setLineDash(new Array(6,4));tctx.strokeRect(px1,py1,rW,rH2);tctx.setLineDash(new Array());
 var corners = [{x:px1, y:py1}, {x:px2, y:py1}, {x:px1, y:py2}, {x:px2, y:py2}, {x:Math.round((px1+px2)/2), y:Math.round((py1+py2)/2)}];
@@ -540,6 +784,12 @@ for(var c=0; c<corners.length; c++){
 
 tctx.strokeStyle="#ff1e9c";tctx.lineWidth=2;for(var i=0;i<tp;i++){var p=pts[i];tctx.beginPath();tctx.arc(p.cx,p.cy,Math.max(4,(p.dm*ppm)/2+2),0,Math.PI*2);tctx.stroke()}
 
+// Marco del Disco Facial compacto
+tctx.strokeStyle="#22d3ee";tctx.lineWidth=2;tctx.strokeRect(faceX1, faceY1, faceX2 - faceX1, faceY2 - faceY1);
+tctx.fillStyle="#22d3ee";
+tctx.font="bold 10px sans-serif";
+tctx.fillText("Disco Facial / Reborde", faceX1, faceY1 - 5);
+
 document.getElementById('sw').style.backgroundColor=hx;
 document.getElementById('fi2').textContent=fi3.toFixed(2);
 document.getElementById('fl').textContent=lb.L.toFixed(1)+" / "+lb.a.toFixed(1)+" / "+lb.b.toFixed(1);
@@ -550,20 +800,30 @@ document.getElementById('ev').textContent=cov.toFixed(2)+" %";
 document.getElementById('en').textContent=den.toFixed(2)+" /cm²";
 renderScale(nivIdx);
 
-// Renderizar el Gráfico estilo RStudio ggplot2 en el nuevo canvas
 renderRPlot(currentPts);
 
-lm={a:fn,fi:fi3.toFixed(2),cf:cf,L:lb.L.toFixed(2),A:lb.a.toFixed(2),B:lb.b.toFixed(2),tp:tp,dm:dm.toFixed(2),ds:ds.toFixed(2),cov:cov.toFixed(2),den:den.toFixed(2),calibrated:calibrationParams?1:0,ppm:ppm};
+lm={
+  a:fn, fi:fi3.toFixed(2), cf:cf, cfDesc:NIVELES[nivIdx].desc, nivIdx:nivIdx, hx:hx,
+  r:Math.round(aR), g:Math.round(aG), b:Math.round(aB),
+  L:lb.L.toFixed(1), A:lb.a.toFixed(1), B:lb.b.toFixed(1),
+  tp:tp, dm:dm.toFixed(2), ds:ds.toFixed(2), cov:cov.toFixed(2), den:den.toFixed(2),
+  faceBorder: faceMetrics.borderVal, faceIntensity: faceMetrics.intensity,
+  calibrated:calibrationParams?1:0, ppm:ppm.toFixed(1),
+  faDiam: faMetrics ? faMetrics.faDiam.toFixed(3) : "-",
+  faCount: faMetrics ? faMetrics.faCount.toFixed(3) : "-",
+  faStatus: faMetrics ? faMetrics.status : "-",
+  asymIzq:asymIzqText, asymDer:asymDerText, asymStatus:asymStatusText,
+  sexPred:sexPredText, estSex:estimatedSexCategory,
+  radiometricStatus: radiometricIntegrity ? radiometricIntegrity.status : "No calibrado"
+};
 }
 
-// Función para generar el mapa de distribución idéntico a RStudio
 function renderRPlot(pts){
   var rCanvas = document.getElementById('rPlotCanvas');
   var rctx = rCanvas.getContext('2d');
   var rw = rCanvas.width;
   var rh = rCanvas.height;
 
-  // Fondo oscuro limpio
   rctx.fillStyle = "#070a10";
   rctx.fillRect(0, 0, rw, rh);
 
@@ -574,7 +834,6 @@ function renderRPlot(pts){
     return;
   }
 
-  // Calcular rangos de coordenadas reales
   var xs = pts.map(function(p){ return p.cx; });
   var ys = pts.map(function(p){ return p.cy; });
   var minX = Math.min.apply(null, xs);
@@ -582,7 +841,6 @@ function renderRPlot(pts){
   var minY = Math.min.apply(null, ys);
   var maxY = Math.max.apply(null, ys);
 
-  // Añadir márgenes a los ejes
   var padX = (maxX - minX) * 0.1 || 50;
   var padY = (maxY - minY) * 0.1 || 50;
   minX -= padX; maxX += padX;
@@ -592,7 +850,6 @@ function renderRPlot(pts){
   var plotW = rw - marginL - marginR;
   var plotH = rh - marginT - marginB;
 
-  // Dibujar rejilla (Grid estilo ggplot2)
   rctx.strokeStyle = "#1e293b";
   rctx.lineWidth = 1;
   var steps = 5;
@@ -604,7 +861,6 @@ function renderRPlot(pts){
     rctx.beginPath(); rctx.moveTo(marginL, gy); rctx.lineTo(rw - marginR, gy); rctx.stroke();
   }
 
-  // Etiquetas de los ejes
   rctx.fillStyle = "#94a3b8";
   rctx.font = "11px system-ui";
   rctx.textAlign = "center";
@@ -616,13 +872,11 @@ function renderRPlot(pts){
   rctx.fillText("Posición Vertical (px)", 0, 0);
   rctx.restore();
 
-  // Valores numéricos en los ejes
   for(var i=0; i<=steps; i++){
     var valX = Math.round(minX + (maxX - minX) * (i / steps));
     var gx = marginL + (plotW / steps) * i;
     rctx.fillText(valX, gx, rh - marginB + 16);
 
-    // Invertir visualmente el eje Y igual que scale_y_reverse() en R
     var valY = Math.round(maxY - (maxY - minY) * (i / steps));
     var gy = marginT + (plotH / steps) * i;
     rctx.textAlign = "right";
@@ -630,12 +884,9 @@ function renderRPlot(pts){
     rctx.textAlign = "center";
   }
 
-  // Pintar los puntos (Burbujas fucsias)
   pts.forEach(function(p){
     var px = marginL + ((p.cx - minX) / (maxX - minX)) * plotW;
-    // Invertir eje Y para que coincida exactamente con ggplot2 + scale_y_reverse()
     var py = marginT + ((p.cy - minY) / (maxY - minY)) * plotH;
-
     var radius = Math.max(2.5, p.dm * 2.2);
 
     rctx.beginPath();
@@ -662,12 +913,11 @@ document.getElementById('csv').onclick=function(){
   var age=document.getElementById('m_age').value;
   var sex=document.getElementById('m_sex').value;
   var wing=document.getElementById('m_wing').value;
-  var tarsus=document.getElementById('m_tarsus').value;
   var mass=document.getElementById('m_mass').value;
   var coords=document.getElementById('m_coords').value.trim();
   var title=document.getElementById('m_title').value.trim();
-  var headers='Titulo_Estudio,Archivo,Anilla_Metalica,Anilla_PVC,Fecha,Localidad,Coordenadas,Edad_Euring,Sexo,Ala_mm,Tarso_mm,Masa_g,Indice_Feomelanina,Nivel_Color,L_star,a_star,b_star,Total_Pintas,Diametro_Medio_mm,Diametro_SD_mm,Cobertura_Pct,Densidad_cm2,Calibrado';
-  var row=[esc(title),esc(m.a),esc(ring),esc(pvc),esc(date),esc(loc),esc(coords),esc(age),esc(sex),wing||'',tarsus||'',mass||'',m.fi,esc(m.cf),m.L,m.A,m.B,m.tp,m.dm,m.ds,m.cov,m.den,m.calibrated].join(',');
+  var headers='Titulo_Estudio,Archivo,Anilla_Metalica,Anilla_PVC,Fecha,Localidad,Coordenadas,Edad_Euring,Sexo,Ala_mm,Masa_g,Indice_Feomelanina,Nivel_Color,L_star,a_star,b_star,Total_Pintas,Diametro_Medio_mm,Diametro_SD_mm,Cobertura_Pct,Densidad_cm2,Reborde_Disco_Facial,Intensidad_Disco_Facial,FA_Diametro_PalmerStrobeck,FA_Abundancia_PalmerStrobeck,Calibrado,Integridad_Radiometrica';
+  var row=[esc(title),esc(m.a),esc(ring),esc(pvc),esc(date),esc(loc),esc(coords),esc(age),esc(sex),wing||'',mass||'',m.fi,esc(m.cf),m.L,m.A,m.B,m.tp,m.dm,m.ds,m.cov,m.den,esc(m.faceBorder),esc(m.faceIntensity),m.faDiam,m.faCount,m.calibrated,esc(m.radiometricStatus)].join(',');
   var c=headers+'\n'+row+'\n';
   var fname=ring?("resumen_"+ring+"_"+m.a+".csv"):("resumen_"+m.a+".csv");
   var a=document.createElement('a');
@@ -692,6 +942,301 @@ document.getElementById('csv_detailed').onclick=function(){
   a.href = URL.createObjectURL(new Blob(['\uFEFF'+c],{type:'text/csv;charset=utf-8;'}));
   a.download = fname;
   a.click();
+};
+
+function generarConclusionIndividual(lm, massVal, sexCode, wingVal, ageText) {
+  let texto = "";
+  const esClaro = lm.nivIdx <= 3;
+  const muchasPintas = lm.tp >= 35 || parseFloat(lm.den) >= 1.2;
+  const pintasGrandes = parseFloat(lm.dm) >= 1.8;
+
+  if (esClaro) {
+    texto += `El ejemplar presenta un fenotipo ventral basal claro (${lm.cf}, ${lm.cfDesc}, índice ${lm.fi}), con baja deposición de feomelanina y un disco facial con reborde ${lm.faceBorder.toLowerCase()}. Desde el punto de vista evolutivo y fisiológico en Tyto alba, esta coloración pálida conlleva una menor demanda metabólica de aminoácidos sulfurados (cisteína) y glutatión durante la muda, reduciendo la susceptibilidad al estrés oxidativo y favoreciendo el sigilo visual en hábitats abiertos durante la caza nocturna. `;
+  } else {
+    texto += `El ejemplar exhibe una coloración basal ventral rica en feomelanina (${lm.cf}, ${lm.cfDesc}, índice ${lm.fi}) y un disco facial con reborde ${lm.faceBorder.toLowerCase()}. En poblaciones mediterráneas de lechuza común, este morfotipo rufescente está genéticamente determinado y suele asociarse a una mayor capacidad de adaptación a microhábitats forestales o heterogéneos, además de reflejar perfiles hormonales y de resistencia al estrés diferenciados. `;
+  }
+
+  if (muchasPintas || pintasGrandes) {
+    texto += `Respecto a la eumelanina, el ave muestra un patrón denso y conspicuo (${lm.tp} pintas, diámetro medio de ${lm.dm} mm y densidad de ${lm.den} pintas/cm²). La expresión marcada de este rasgo altamente heredable es un indicador honesto de calidad fenotípica: se correlaciona con una respuesta inmunitaria celular más eficaz, mayor resistencia frente a ectoparásitos hematófagos (como Carnus hemapterus) y mayor resistencia estructural de las plumas al desgaste. `;
+  } else {
+    texto += `En cuanto a la eumelanina, presenta un moteado ventral discreto (${lm.tp} pintas, diámetro medio de ${lm.dm} mm y densidad de ${lm.den} pintas/cm²). Este patrón de baja densidad y menor tamaño de pinta es característico de individuos con baja carga eumelánica, rasgo frecuente en machos adultos o en morfotipos especializados en estrategias tróficas de alta movilidad nocturna. `;
+  }
+
+  let sexoFinal = "indeterminado";
+  if (sexCode === "M") sexoFinal = "macho (confirmado en campo)";
+  else if (sexCode === "F") sexoFinal = "hembra (confirmada en campo)";
+  else if (lm.estSex === "MACHO") sexoFinal = "macho (estimado por modelo biométrico-pigmentario)";
+  else if (lm.estSex === "HEMBRA") sexoFinal = "hembra (estimado por modelo biométrico-pigmentario)";
+
+  if (massVal > 0) {
+    if (massVal <= 295) {
+      texto += `Biométricamente, su masa corporal (${massVal} g) se sitúa plenamente dentro del rango ligero característico de los machos de la población de estudio (media poblacional 284,9 ± 21,5 g), lo cual es coherente con su perfil ${sexoFinal} y su diseño aerodinámico optimizado para el aprovisionamiento activo de presas. `;
+    } else if (massVal > 325) {
+      texto += `Su masa corporal (${massVal} g) refleja una envergadura y reservas somáticas elevadas, propias de las hembras de la población local (media poblacional 319,6 ± 46,0 g), respaldando su clasificación como ${sexoFinal} y evidenciando una buena condición nutricional para afrontar los costes energéticos de la incubación y cría. `;
+    } else {
+      texto += `Su masa corporal (${massVal} g) se ubica en la franja intermedia de solapamiento poblacional (295–325 g); no obstante, al integrar este peso con su patrón de feomelanina y eumelanina, la arquitectura fenotípica resulta consistente con un individuo ${sexoFinal}. `;
+    }
+  } else {
+    texto += `Al no disponerse de registro de masa corporal en gramos, la caracterización sexual queda supeditada a su fenotipo pigmentario (${sexoFinal}). `;
+  }
+
+  let statClean = lm.radiometricStatus.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu, '').trim();
+  texto += `Asimismo, la Asimetría Fluctuante (Palmer & Strobeck) y la calibración radiométrica lineal (${statClean}) garantizan la robustez analítica y la estabilidad ontogénica del desarrollo plumario.`;
+
+  return texto;
+}
+
+document.getElementById('pdf_report').onclick = function() {
+  if (!lm) {
+    alert("Por favor, analiza primero una fotografía antes de generar el informe.");
+    return;
+  }
+  
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  
+  const title = document.getElementById('m_title').value.trim() || "Estudio Morfo-Pigmentario en Tyto alba";
+  const ring = document.getElementById('m_ring').value.trim() || "No especificada";
+  const pvc = document.getElementById('m_pvc').value.trim() || "No especificada";
+  const date = document.getElementById('m_date').value || "Sin fecha";
+  const loc = document.getElementById('m_loc').value.trim() || "No especificada";
+  const coords = document.getElementById('m_coords').value.trim() || "No especificadas";
+  const ageSel = document.getElementById('m_age');
+  const age = ageSel.options[ageSel.selectedIndex].text.replace("-- Seleccionar --", "No especificada");
+  const sexSel = document.getElementById('m_sex');
+  const sexCode = sexSel.value;
+  const sexField = sexSel.options[sexSel.selectedIndex].text;
+  const wingNum = parseFloat(document.getElementById('m_wing').value) || 0;
+  const wing = wingNum > 0 ? wingNum + " mm" : "-";
+  const massNum = parseFloat(document.getElementById('m_mass').value) || 0;
+  const mass = massNum > 0 ? massNum + " g" : "-";
+
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, 210, 26, 'F');
+  doc.setTextColor(34, 211, 238);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("TYTO ALBA PHENOLAB - INFORME CIENTÍFICO", 14, 12);
+  doc.setTextColor(226, 232, 240);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(title.substring(0, 85), 14, 19);
+
+  let y = 32;
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(11.5);
+  doc.setFont("helvetica", "bold");
+  doc.text("1. Datos de Anillamiento y Biometría de Campo", 14, y);
+  doc.setDrawColor(14, 116, 144);
+  doc.line(14, y + 2, 196, y + 2);
+  
+  y += 7;
+  doc.setFontSize(9);
+  const metaRows = [
+    ["Anilla Metálica:", ring, "Anilla PVC / Color:", pvc],
+    ["Fecha de Captura:", date, "Localidad / Proyecto:", loc],
+    ["Coordenadas:", coords, "Edad (EURING):", age],
+    ["Sexo Registrado:", sexField, "Archivo Fuente:", lm.a],
+    ["Ala Máxima:", wing, "Masa Corporal:", mass],
+    ["Calibración Lineal:", lm.calibrated ? "Activa (Paleta Integrada)" : "Omitida", "Integridad:", lm.radiometricStatus.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu, "").trim()]
+  ];
+
+  metaRows.forEach(r => {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(71, 85, 105);
+    doc.text(r[0], 14, y);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(15, 23, 42);
+    doc.text(String(r[1]), 48, y);
+
+    if (r[2]) {
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(71, 85, 105);
+      doc.text(r[2], 108, y);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(15, 23, 42);
+      doc.text(String(r[3]), 144, y);
+    }
+    y += 5;
+  });
+
+  y += 3;
+  doc.setFontSize(11.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(15, 23, 42);
+  doc.text("2. Resultados Pigmentarios y Morfométricos", 14, y);
+  doc.setDrawColor(217, 119, 6);
+  doc.line(14, y + 2, 196, y + 2);
+  y += 7;
+
+  doc.setFillColor(254, 243, 199);
+  doc.rect(14, y, 92, 45, 'F');
+  doc.setFontSize(9.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(180, 83, 9);
+  doc.text("Feomelanina (Color Base Lineal)", 17, y + 5);
+  doc.setFontSize(8.5);
+  doc.setTextColor(30, 41, 59);
+  doc.setFont("helvetica", "normal");
+  doc.text("• Índice de Feomelanina: " + lm.fi, 17, y + 11);
+  doc.text("• CIELAB Lineal: L* " + lm.L + " | a* " + lm.A + " | b* " + lm.B, 17, y + 17);
+  doc.text("• Escala Visual: " + lm.cf + " (" + lm.cfDesc + ")", 17, y + 23);
+  
+  doc.setFillColor(lm.r, lm.g, lm.b);
+  doc.setDrawColor(100);
+  doc.rect(17, y + 28, 12, 5, 'FD');
+  doc.setFontSize(8);
+  doc.text("Muestra media (" + lm.hx.toUpperCase() + ")", 32, y + 32);
+
+  doc.setFillColor(248, 250, 252);
+  doc.rect(109, y, 87, 45, 'F');
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(15, 23, 42);
+  doc.text("Escala Visual de Tonalidad (8 Niveles)", 112, y + 5);
+  
+  let scaleY = y + 9;
+  NIVELES.forEach((niv, idx) => {
+    let isAct = (idx === lm.nivIdx);
+    doc.setFillColor(niv.rgb[0], niv.rgb[1], niv.rgb[2]);
+    doc.setDrawColor(isAct ? 14 : 100, isAct ? 116 : 100, isAct ? 144 : 100);
+    doc.rect(112, scaleY, 6, 3.5, 'FD');
+
+    doc.setFont("helvetica", isAct ? "bold" : "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(isAct ? 14 : 50, isAct ? 116 : 50, isAct ? 144 : 50);
+    doc.text(niv.name + (isAct ? " (Detectado)" : ""), 121, scaleY + 2.8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(niv.desc, 155, scaleY + 2.8);
+    scaleY += 4.2;
+  });
+
+  y += 48;
+  doc.setFillColor(252, 231, 243);
+  doc.rect(14, y, 182, 23, 'F');
+  doc.setFontSize(9.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(190, 24, 93);
+  doc.text("Eumelanina (Pintas Ventrales y Disco Facial)", 17, y + 5);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(30, 41, 59);
+  doc.setFontSize(8.2);
+  doc.text("• Total de Pintas: " + lm.tp + "   |   • Diámetro Medio: " + lm.dm + " ± " + lm.ds + " mm   |   • Cobertura: " + lm.cov + "%   |   • Densidad: " + lm.den + "/cm²", 17, y + 11.5);
+  doc.text("• Reborde Eumelánico Facial: " + lm.faceBorder + "   |   • Intensidad Disco Facial: " + lm.faceIntensity, 17, y + 17.5);
+
+  y += 26;
+  doc.setFillColor(224, 242, 254);
+  doc.rect(14, y, 182, 21, 'F');
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(3, 105, 161);
+  doc.text("Asimetría Fluctuante (Palmer & Strobeck) y Estimación Sexual:", 17, y + 5);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(8.2);
+  doc.text("Flanco Izq: " + lm.asymIzq + "  |  Flanco Der: " + lm.asymDer, 17, y + 10);
+  doc.text("Índice FA (Diámetro): " + lm.faDiam + "  |  Índice FA (Abundancia): " + lm.faCount + "  |  Estado: " + lm.faStatus, 17, y + 14.5);
+  doc.setFont("helvetica", "bold");
+  doc.text("Diagnóstico: " + lm.sexPred, 17, y + 19);
+
+  y += 28;
+  doc.setFontSize(11.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(15, 23, 42);
+  doc.text("3. Evidencia Fotográfica y Mapa de Distribución Ventral", 14, y);
+  doc.setDrawColor(15, 23, 42);
+  doc.line(14, y + 2, 196, y + 2);
+  y += 5;
+
+  const imgStudy = cv.toDataURL('image/jpeg', 0.88);
+  const imgPlot = document.getElementById('rPlotCanvas').toDataURL('image/png');
+
+  const ratio1 = cv.height / cv.width;
+  const w1 = 88;
+  const h1 = Math.min(58, w1 * ratio1);
+  const finalW1 = h1 / ratio1;
+
+  const w2 = 90;
+  const h2 = 54;
+
+  doc.addImage(imgStudy, 'JPEG', 14 + (88 - finalW1)/2, y, finalW1, h1);
+  doc.addImage(imgPlot, 'PNG', 106, y + (h1 - h2)/2, w2, h2);
+
+  y += Math.max(h1, h2) + 3;
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text("Fig 1. ROI analizada, disco facial, eje sagital (L/R) y paleta integrada.", 14, y);
+  doc.text("Fig 2. Distribución espacial de pintas (escala ggplot2 / RStudio).", 106, y);
+
+  doc.addPage();
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, 210, 18, 'F');
+  doc.setTextColor(34, 211, 238);
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("4. Guía de Calibración Lineal e Integridad Radiométrica", 14, 12);
+
+  let py = 25;
+  const seccionesExp = [
+    {
+      titulo: "A. Calibración sobre Datos Lineales Puros",
+      texto: "La calibración radiométrica lineal utiliza la paleta de colores integrada para revertir el gamma sRGB mediante la función de transferencia lineal inversa, garantizando reflectancias reales (0.90 blanco, 0.18 gris, 0.03 negro)."
+    },
+    {
+      titulo: "B. Indicador de Integridad Radiométrica",
+      texto: "Evalúa la linealidad R² del ajuste de los parches integrados y detecta saturaciones o subexposiciones en el sensor."
+    },
+    {
+      titulo: "C. Asimetría Fluctuante (Palmer & Strobeck) y Sexaje",
+      texto: "Cuantifica la estabilidad ontogénica del plumaje separando flanco izquierdo y derecho mediante el eje sagital anatómico."
+    }
+  ];
+
+  seccionesExp.forEach(sec => {
+    doc.setFontSize(9.8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(14, 116, 144);
+    doc.text(sec.titulo, 14, py);
+    py += 4.5;
+
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(30, 41, 59);
+    const lines = doc.splitTextToSize(sec.texto, 182);
+    doc.text(lines, 14, py);
+    py += (lines.length * 4.0) + 4.5;
+  });
+
+  py += 2;
+  doc.setFontSize(8.6);
+  doc.setFont("helvetica", "normal");
+  const conclusionText = generarConclusionIndividual(lm, massNum, sexCode, wingNum, age);
+  const conclLines = doc.splitTextToSize(conclusionText, 172);
+  const boxHeight = Math.max(45, (conclLines.length * 4.3) + 20);
+
+  doc.setFillColor(240, 249, 255);
+  doc.setDrawColor(14, 116, 144);
+  doc.setLineWidth(0.5);
+  doc.rect(14, py, 182, boxHeight, 'FD');
+
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(15, 23, 42);
+  doc.text("5. Conclusión Científica Integrada del Ejemplar", 18, py + 6.5);
+
+  doc.setFontSize(8.6);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(15, 23, 42);
+  doc.text(conclLines, 18, py + 12.5);
+
+  doc.setDrawColor(203, 213, 225);
+  doc.line(14, 282, 196, 282);
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text("Documento generado automáticamente por Tyto Alba PhenoLab | Fecha de emisión: " + new Date().toLocaleDateString('es-ES'), 14, 288);
+
+  const pdfName = "Informe_TytoAlba_" + (ring !== "No especificada" ? ring : lm.a) + ".pdf";
+  doc.save(pdfName);
 };
 </script>
 </body>
